@@ -151,4 +151,24 @@ describe('resolveOptions', () => {
       keepMetadata: false
     })
   })
+
+  it('normalizes resize and background options', () => {
+    expect(
+      resolveOptions('jpg', {
+        resizeWidth: 1200,
+        resizeHeight: 800,
+        backgroundColor: '#3366CC'
+      })
+    ).toEqual({
+      quality: 80,
+      keepMetadata: false,
+      resizeWidth: 1200,
+      resizeHeight: 800,
+      backgroundColor: '#3366cc'
+    })
+    expect(resolveOptions('jpg', { resizeWidth: 0, resizeHeight: 20001 })).toEqual({
+      quality: 80,
+      keepMetadata: false
+    })
+  })
 })

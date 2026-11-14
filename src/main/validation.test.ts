@@ -71,7 +71,13 @@ describe('parseConvertRequest', () => {
         requestJob({
           input: { path: '/tmp/photo.HEIC', name: 'spoofed.exe', size: -5, format: 'gif' },
           to: 'png',
-          options: { quality: 500, keepMetadata: true }
+          options: {
+            quality: 500,
+            keepMetadata: true,
+            resizeWidth: 1200,
+            resizeHeight: 800,
+            backgroundColor: '#3366CC'
+          }
         })
       ],
       outputDir: null
@@ -83,7 +89,13 @@ describe('parseConvertRequest', () => {
       size: 0,
       format: 'heic'
     })
-    expect(request.jobs[0]?.options).toEqual({ quality: 100, keepMetadata: true })
+    expect(request.jobs[0]?.options).toEqual({
+      quality: 100,
+      keepMetadata: true,
+      resizeWidth: 1200,
+      resizeHeight: 800,
+      backgroundColor: '#3366cc'
+    })
   })
 
   it('accepts an absolute output directory', () => {

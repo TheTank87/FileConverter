@@ -14,6 +14,7 @@ export interface FileRowProps {
 export function FileRow({ job, formats }: FileRowProps) {
   const removeFile = useAppStore((state) => state.removeFile)
   const setFileFormat = useAppStore((state) => state.setFileFormat)
+  const setFileOptions = useAppStore((state) => state.setFileOptions)
   const setError = useAppStore((state) => state.setError)
   const batchId = useAppStore((state) => state.batchId)
   const progress = useAppStore((state) => state.progress[job.id])
@@ -78,6 +79,74 @@ export function FileRow({ job, formats }: FileRowProps) {
           onChange={(to) => setFileFormat(job.id, to)}
         />
       </div>
+
+      {editable && (
+        <div className="file-row__options">
+          <label>
+            <span>Quality</span>
+            <input
+              type="number"
+              min="1"
+              max="100"
+              step="1"
+              value={job.options.quality ?? ''}
+              placeholder="Default"
+              onChange={(event) =>
+                setFileOptions(job.id, { quality: optionalNumber(event.target.value) })
+              }
+            />
+          </label>
+          <label>
+            <span>Width</span>
+            <input
+              type="number"
+              min="1"
+              max="20000"
+              step="1"
+              value={job.options.resizeWidth ?? ''}
+              placeholder="Auto"
+              onChange={(event) =>
+                setFileOptions(job.id, { resizeWidth: optionalNumber(event.target.value) })
+              }
+            />
+          </label>
+          <label>
+            <span>Height</span>
+            <input
+              type="number"
+              min="1"
+              max="20000"
+              step="1"
+              value={job.options.resizeHeight ?? ''}
+              placeholder="Auto"
+              onChange={(event) =>
+                setFileOptions(job.id, { resizeHeight: optionalNumber(event.target.value) })
+              }
+            />
+          </label>
+          {job.to === 'jpg' && (
+            <label>
+              <span>Background</span>
+              <input
+                type="text"
+                value={job.options.backgroundColor ?? '#ffffff'}
+                pattern="#[0-9a-fA-F]{6,8}"
+                onChange={(event) =>
+                  setFileOptions(job.id, { backgroundColor: event.target.value })
+                }
+              />
+            </label>
+          )}
+          <label className="file-row__checkbox">
+            <input
+              type="checkbox"
+              checked={job.options.keepMetadata === true}
+              onChange={(event) => setFileOptions(job.id, { keepMetadata: event.target.checked })}
+            />
+            <span>Keep metadata</span>
+          </label>
+        </div>
+      )}
 
       <button
         type="button"
@@ -178,4 +247,10 @@ function targetLabel(formats: FormatDef[], job: Job): string {
 function fileName(path: string): string {
   const parts = path.split(/[\\/]/)
   return parts[parts.length - 1] ?? path
+}
+
+function optionalNumber(value: string): number | undefined {
+  if (value.trim() === '') return undefined
+  const parsed = Number(value)
+  return Number.isInteger(parsed) ? parsed : undefined
 }

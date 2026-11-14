@@ -11,6 +11,7 @@ can open anywhere.
 
 - **Drag & drop** files onto the window, or **click to browse**. Both work.
 - Pick a **target format** for the whole batch, or override it per file.
+- Set per-file **quality, maximum width/height, JPG background color, and metadata** options.
 - Convert **many files at once**; progress is shown per file and for the batch.
 - Save **beside the original** by default, or choose an output folder.
 - **Never overwrites the source.** Name collisions become `photo-1.png`, `photo-2.png`, ….
@@ -47,6 +48,16 @@ Early development. Phase 4 (formats & engines) is complete; the format matrix, `
 ImageMagick fallback are in place. The remaining work is tracked in [`todos.md`](./todos.md).
 Planned for later releases: per-file options (quality, resize), audio/video via FFmpeg, and document
 conversion.
+
+### Per-file options
+
+Each queued file can override the defaults before conversion:
+
+- **Quality:** 1–100 for JPG, WEBP, and AVIF.
+- **Width/height:** optional maximum dimensions; aspect ratio is preserved and images are never
+  enlarged.
+- **Background:** a `#RRGGBB` or `#RRGGBBAA` color used when flattening transparency to JPG.
+- **Keep metadata:** disabled by default so EXIF/GPS data is not retained accidentally.
 
 ## Documentation
 

@@ -125,6 +125,31 @@ function parseOptions(value: unknown, index: number): ConvertOptions {
     options.keepMetadata = value.keepMetadata
   }
 
+  for (const dimension of ['resizeWidth', 'resizeHeight'] as const) {
+    if (value[dimension] !== undefined) {
+      if (
+        typeof value[dimension] !== 'number' ||
+        !Number.isFinite(value[dimension]) ||
+        !Number.isInteger(value[dimension]) ||
+        value[dimension] < 1 ||
+        value[dimension] > 20000
+      ) {
+        fail(`jobs[${index}].options.${dimension} must be an integer from 1 to 20000.`)
+      }
+      options[dimension] = value[dimension]
+    }
+  }
+
+  if (value.backgroundColor !== undefined) {
+    if (
+      typeof value.backgroundColor !== 'string' ||
+      !/^#[0-9a-f]{6}(?:[0-9a-f]{2})?$/i.test(value.backgroundColor)
+    ) {
+      fail(`jobs[${index}].options.backgroundColor must be a #RRGGBB or #RRGGBBAA color.`)
+    }
+    options.backgroundColor = value.backgroundColor.toLowerCase()
+  }
+
   return options
 }
 

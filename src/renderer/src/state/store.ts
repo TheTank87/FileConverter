@@ -8,6 +8,7 @@ import type {
   Job,
   JobDoneEvent,
   JobStatus,
+  ConvertOptions,
   ProgressEvent,
   Settings,
   ThemeMode
@@ -37,6 +38,7 @@ export interface AppState {
   addPaths(paths: string[]): Promise<void>
   removeFile(jobId: string): void
   setFileFormat(jobId: string, to: FormatId): void
+  setFileOptions(jobId: string, options: Partial<ConvertOptions>): void
   setTargetFormat(format: FormatId): void
   setOutputDir(dir: string | null): Promise<void>
   setTheme(theme: ThemeMode): Promise<void>
@@ -202,6 +204,16 @@ export const useAppStore = create<AppState>((set, get) => ({
     set((state) => ({
       files: state.files.map((job) =>
         job.id === jobId && job.status === 'queued' && job.batchId === '' ? { ...job, to } : job
+      )
+    }))
+  },
+
+  setFileOptions(jobId, options) {
+    set((state) => ({
+      files: state.files.map((job) =>
+        job.id === jobId && job.status === 'queued' && job.batchId === ''
+          ? { ...job, options: { ...job.options, ...options } }
+          : job
       )
     }))
   },

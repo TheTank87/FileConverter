@@ -74,6 +74,37 @@ describe.runIf(HAS_SAMPLES)('sharpEngine integration', () => {
     expect(data[2]).toBeLessThan(115)
   })
 
+  it('applies custom JPG background and bounds resize dimensions', async () => {
+    const dir = await tempDir()
+    const inputPath = join(dir, 'transparent.png')
+    const outputPath = join(dir, 'custom-background.jpg')
+
+    await sharp({
+      create: { width: 80, height: 40, channels: 4, background: '#ff000000' }
+    })
+      .png()
+      .toFile(inputPath)
+
+    await sharpEngine.convert({
+      jobId: 'custom-options',
+      inputPath,
+      outputPath,
+      from: 'png',
+      to: 'jpg',
+      options: { resizeWidth: 20, backgroundColor: '#3366cc' }
+    })
+
+    const output = await sharp(outputPath).metadata()
+    expect(output.width).toBe(20)
+    expect(output.height).toBe(10)
+
+    const { data } = await sharp(outputPath).raw().toBuffer({ resolveWithObject: true })
+    expect(data[0]).toBeGreaterThan(30)
+    expect(data[0]).toBeLessThan(80)
+    expect(data[1]).toBeGreaterThan(70)
+    expect(data[2]).toBeGreaterThan(150)
+  })
+
   it('preserves animation when converting GIF to WEBP or GIF', async () => {
     const toWebp = await convert('gif', 'webp', 'anim.gif')
     const webp = await sharp(await readFile(toWebp.outputPath), { animated: true }).metadata()

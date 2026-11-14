@@ -94,10 +94,21 @@ export const magickEngine: ConversionEngine = createMagickEngine()
 function buildArgs(input: ConvertInput, options: ConvertOptions, tempPath: string): string[] {
   const args = [input.inputPath, '-auto-orient']
 
+  if (options.resizeWidth !== undefined || options.resizeHeight !== undefined) {
+    args.push('-resize', `${options.resizeWidth ?? ''}x${options.resizeHeight ?? ''}>`)
+  }
+
   if (options.keepMetadata !== true) args.push('-strip')
 
   if (input.to === 'jpg') {
-    args.push('-background', 'white', '-alpha', 'remove', '-alpha', 'off')
+    args.push(
+      '-background',
+      options.backgroundColor ?? 'white',
+      '-alpha',
+      'remove',
+      '-alpha',
+      'off'
+    )
   }
 
   if (input.to === 'jpg' || input.to === 'webp' || input.to === 'avif') {

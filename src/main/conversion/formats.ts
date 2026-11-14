@@ -183,10 +183,16 @@ export function resolveOptions(to: FormatId, options: ConvertOptions = {}): Conv
   const defaults = FORMAT_MATRIX[to].defaultOptions
   const quality = normalizeQuality(options.quality, defaults.quality)
   const keepMetadata = options.keepMetadata ?? defaults.keepMetadata ?? false
+  const resizeWidth = normalizeDimension(options.resizeWidth)
+  const resizeHeight = normalizeDimension(options.resizeHeight)
+  const backgroundColor = normalizeBackgroundColor(options.backgroundColor)
 
   return {
     ...(quality === undefined ? {} : { quality }),
-    keepMetadata
+    keepMetadata,
+    ...(resizeWidth === undefined ? {} : { resizeWidth }),
+    ...(resizeHeight === undefined ? {} : { resizeHeight }),
+    ...(backgroundColor === undefined ? {} : { backgroundColor })
   }
 }
 
@@ -196,4 +202,17 @@ function normalizeQuality(
 ): number | undefined {
   if (typeof value !== 'number' || !Number.isFinite(value)) return fallback
   return Math.min(100, Math.max(1, Math.round(value)))
+}
+
+function normalizeDimension(value: number | undefined): number | undefined {
+  if (typeof value !== 'number' || !Number.isInteger(value) || value < 1 || value > 20000) {
+    return undefined
+  }
+  return value
+}
+
+function normalizeBackgroundColor(value: string | undefined): string | undefined {
+  return typeof value === 'string' && /^#[0-9a-f]{6}(?:[0-9a-f]{2})?$/i.test(value)
+    ? value.toLowerCase()
+    : undefined
 }

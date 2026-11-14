@@ -89,7 +89,18 @@ function buildPipeline(
   const animated = isAnimatedPair(from, to)
   let pipeline = sharp(inputPath, { animated }).autoOrient()
 
-  if (to === 'jpg') pipeline = pipeline.flatten({ background: '#ffffff' })
+  if (options.resizeWidth !== undefined || options.resizeHeight !== undefined) {
+    pipeline = pipeline.resize({
+      width: options.resizeWidth,
+      height: options.resizeHeight,
+      fit: 'inside',
+      withoutEnlargement: true
+    })
+  }
+
+  if (to === 'jpg') {
+    pipeline = pipeline.flatten({ background: options.backgroundColor ?? '#ffffff' })
+  }
 
   pipeline = options.keepMetadata === true ? pipeline.keepMetadata() : pipeline.keepIccProfile()
 

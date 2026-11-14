@@ -16,6 +16,9 @@ export type EngineId = 'sharp' | 'magick'
 export interface ConvertOptions {
   quality?: number
   keepMetadata?: boolean
+  resizeWidth?: number
+  resizeHeight?: number
+  backgroundColor?: string
 }
 
 export interface FormatDef {

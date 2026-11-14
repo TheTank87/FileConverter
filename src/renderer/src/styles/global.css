@@ -409,6 +409,7 @@ button:disabled {
   grid-template-columns: 44px minmax(0, 1fr) auto auto;
   grid-template-areas:
     'thumb info picker remove'
+    'thumb options options options'
     'thumb status status status';
   gap: var(--space-2) var(--space-3);
   align-items: center;
@@ -456,6 +457,40 @@ button:disabled {
 
 .file-row__picker {
   grid-area: picker;
+}
+
+.file-row__options {
+  grid-area: options;
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  padding-top: var(--space-1);
+}
+
+.file-row__options label {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+}
+
+.file-row__options input[type='number'],
+.file-row__options input[type='text'] {
+  width: 92px;
+  min-height: 30px;
+  padding: var(--space-1) var(--space-2);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
+.file-row__checkbox {
+  flex-direction: row !important;
+  align-items: center;
+  min-height: 30px;
+  padding-top: var(--space-4);
 }
 
 .file-row__remove {
