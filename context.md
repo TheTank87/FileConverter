@@ -182,11 +182,12 @@ npm run build:win    # → dist/*.exe (NSIS installer + portable)
 | Fixtures | `sips` + `ffmpeg` (dev only) | Not app dependencies; used once to generate `samples/`. |
 
 > `postinstall` runs `electron-builder install-app-deps` and the pinned ImageMagick fetch script
-> (Windows x64/arm64). macOS release artifacts still need a verified static ImageMagick source;
-> until one is configured, place `magick` in `resources/bin/<platform>-<arch>/` manually. If it is
-> missing, HEIC and BMP conversions fail with `ENGINE_MISSING` — a setup error, not an app bug.
-> The three `magickEngine` integration tests are gated on that binary, so they show as **skipped**
-> (not failed) until it is present.
+> (Windows x64/arm64). On macOS, the script uses Homebrew's verified ImageMagick bottle at build
+> time, copies the formula and runtime dylibs into the app resources, rewrites their paths, and
+> signs them ad hoc. The final app does not require Homebrew. If the binary is missing, HEIC and
+> BMP conversions fail with `ENGINE_MISSING` — a setup error, not an app bug. The three
+> `magickEngine` integration tests are gated on that binary, so they show as **skipped** (not
+> failed) until it is present.
 
 ---
 

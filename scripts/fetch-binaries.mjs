@@ -1,10 +1,14 @@
 import { createHash } from 'node:crypto'
 import { createReadStream, createWriteStream } from 'node:fs'
-import { mkdir, rename, rm, stat } from 'node:fs/promises'
+import { chmod, cp, mkdir, rename, rm, stat, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
-import { dirname, join } from 'node:path'
+import { dirname, basename, join, relative, sep } from 'node:path'
 import { pipeline } from 'node:stream/promises'
 import { fileURLToPath } from 'node:url'
+import { execFile } from 'node:child_process'
+import { promisify } from 'node:util'
+
+const execFileAsync = promisify(execFile)
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
 const binaryRoot = join(root, 'resources', 'bin')
 const version = '7.1.2-35'
@@ -26,8 +30,15 @@ const releases = {
   }
 }
 
-const key = `${process.platform}-${process.arch}`
+const requestedPlatform = getOption('--platform') ?? process.platform
+const requestedArch = getOption('--arch') ?? process.arch
+const key = `${requestedPlatform}-${requestedArch}`
 const release = releases[key]
+
+if (requestedPlatform === 'darwin') {
+  await fetchMacImageMagick(key, requestedArch)
+  process.exit(0)
+}
 
 if (!release) {
   if (process.env.CI === 'true' || process.env.CI === '1') {
@@ -68,6 +79,7 @@ try {
 
   if (release.kind === 'executable') {
     await rename(temporaryArchive, destination)
+    if (requestedPlatform !== 'win32') await chmod(destination, 0o755)
     process.exit(0)
   }
 
@@ -89,4 +101,172 @@ async function sha256(path) {
   const hash = createHash('sha256')
   await pipeline(createReadStream(path), hash)
   return hash.digest('hex')
+}
+
+async function fetchMacImageMagick(key, requestedArch) {
+  if (requestedArch !== process.arch) {
+    throw new Error(
+      `Cannot fetch a ${key} ImageMagick binary on ${process.platform}-${process.arch}; run this on a matching macOS runner.`
+    )
+  }
+
+  const destinationDir = join(binaryRoot, key)
+  const launcher = join(destinationDir, 'magick')
+
+  try {
+    await stat(launcher)
+    console.log(`ImageMagick already present at ${launcher}; skipping download.`)
+    return
+  } catch (error) {
+    if (error?.code !== 'ENOENT') throw error
+  }
+
+  if (process.env.CI === 'true' || process.env.CI === '1') {
+    await requireCommand('brew')
+  } else {
+    try {
+      await requireCommand('brew')
+    } catch (error) {
+      console.warn(`${error.message} Skipping ImageMagick download for ${key}.`)
+      return
+    }
+  }
+
+  await execFileAsync('brew', ['install', 'imagemagick'], { stdio: 'inherit' })
+  const formulaPrefix = (await execFileAsync('brew', ['--prefix', 'imagemagick'])).stdout.trim()
+  if (!formulaPrefix) throw new Error('Homebrew did not return the ImageMagick prefix.')
+
+  const dependencies = (await execFileAsync('brew', ['deps', '--installed', 'imagemagick'])).stdout
+    .split(/\r?\n/)
+    .map((dependency) => dependency.trim())
+    .filter(Boolean)
+
+  const temporaryDir = join(tmpdir(), `diat-imagemagick-${process.pid}`)
+  const bundledPrefix = join(temporaryDir, 'imagemagick')
+  const bundledLib = join(temporaryDir, 'lib')
+
+  try {
+    await rm(temporaryDir, { recursive: true, force: true })
+    await mkdir(bundledLib, { recursive: true })
+    await cp(formulaPrefix, bundledPrefix, { recursive: true, dereference: true })
+
+    for (const dependency of dependencies) {
+      const dependencyPrefix = (await execFileAsync('brew', ['--prefix', dependency])).stdout.trim()
+      await copyLibraries(join(dependencyPrefix, 'lib'), bundledLib)
+    }
+    await copyLibraries(join(bundledPrefix, 'lib'), bundledLib)
+    await rewriteDylibReferences(temporaryDir, bundledLib)
+    await signMachOFiles(temporaryDir)
+
+    await mkdir(destinationDir, { recursive: true })
+    await cp(bundledPrefix, join(destinationDir, 'imagemagick'), {
+      recursive: true,
+      dereference: true
+    })
+    await cp(bundledLib, join(destinationDir, 'lib'), { recursive: true, dereference: true })
+    await writeFile(
+      launcher,
+      `#!/bin/sh
+set -e
+ROOT="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
+export MAGICK_HOME="$ROOT/imagemagick"
+export MAGICK_CONFIGURE_PATH="$ROOT/imagemagick/etc/ImageMagick-7:$ROOT/imagemagick/share/ImageMagick-7"
+export MAGICK_CODER_MODULE_PATH="$ROOT/imagemagick/lib/ImageMagick/modules-Q16HDRI/coders"
+export MAGICK_FILTER_MODULE_PATH="$ROOT/imagemagick/lib/ImageMagick/modules-Q16HDRI/filters"
+export DYLD_LIBRARY_PATH="$ROOT/lib:$ROOT/imagemagick/lib\${DYLD_LIBRARY_PATH:+:$DYLD_LIBRARY_PATH}"
+exec "$ROOT/imagemagick/bin/magick" "$@"
+`
+    )
+    await chmod(launcher, 0o755)
+    await execFileAsync(launcher, ['-version'], { env: { ...process.env } })
+    console.log(`Fetched and bundled ImageMagick for ${key} at ${destinationDir}.`)
+  } finally {
+    await rm(temporaryDir, { recursive: true, force: true })
+  }
+}
+
+async function copyLibraries(sourceDir, destinationDir) {
+  try {
+    const entries = await (await import('node:fs/promises')).readdir(sourceDir)
+    for (const entry of entries) {
+      if (entry.endsWith('.dylib') || entry.includes('.dylib.')) {
+        await cp(join(sourceDir, entry), join(destinationDir, entry), {
+          recursive: true,
+          dereference: true
+        })
+      }
+    }
+  } catch (error) {
+    if (error?.code !== 'ENOENT') throw error
+  }
+}
+
+async function rewriteDylibReferences(rootDir, bundledLib) {
+  const files = await findFiles(rootDir)
+  for (const file of files) {
+    if (!file.endsWith('.dylib') && basename(file) !== 'magick') continue
+    const { stdout } = await execFileAsync('otool', ['-L', file])
+    for (const line of stdout.split(/\r?\n/).slice(1)) {
+      const dependency = line.trim().split(' ')[0]
+      if (!dependency || dependency.startsWith('/usr/lib/') || dependency.startsWith('/System/'))
+        continue
+      const dependencyName = basename(dependency.split(' ')[0])
+      const bundledDependency = join(bundledLib, dependencyName)
+      try {
+        await stat(bundledDependency)
+      } catch {
+        continue
+      }
+      const loaderRelativePath = relative(dirname(file), bundledDependency).split(sep).join('/')
+      await execFileAsync('install_name_tool', [
+        '-change',
+        dependency,
+        `@loader_path/${loaderRelativePath}`,
+        file
+      ])
+    }
+  }
+}
+
+async function signMachOFiles(rootDir) {
+  await requireCommand('codesign')
+  const files = await findFiles(rootDir)
+  for (const file of files) {
+    let fileType
+    try {
+      fileType = (await execFileAsync('file', ['-b', file])).stdout
+    } catch {
+      continue
+    }
+    if (!fileType.includes('Mach-O')) continue
+    await execFileAsync('codesign', ['--force', '--sign', '-', file])
+  }
+}
+
+async function findFiles(directory) {
+  const entries = await (
+    await import('node:fs/promises')
+  ).readdir(directory, {
+    withFileTypes: true
+  })
+  const files = []
+  for (const entry of entries) {
+    const path = join(directory, entry.name)
+    if (entry.isDirectory()) files.push(...(await findFiles(path)))
+    else files.push(path)
+  }
+  return files
+}
+
+async function requireCommand(command) {
+  try {
+    await execFileAsync('which', [command])
+  } catch {
+    throw new Error(`Required command not found: ${command}`)
+  }
+}
+
+function getOption(name) {
+  const argument = process.argv.find((value) => value.startsWith(`${name}=`))
+  return argument?.slice(name.length + 1)
 }

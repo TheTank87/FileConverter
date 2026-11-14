@@ -254,9 +254,10 @@ Windows) remains pending until Phase 10 provides bundled ImageMagick and install
 
 - [x] `electron-builder.yml`: `appId`, `productName`, mac (universal dmg), win (NSIS +
       portable), `files`, `asarUnpack` for `resources/bin/**`.
-- [ ] `scripts/fetch-binaries.mjs`: download static ImageMagick per `platform-arch` into
-      `resources/bin/…`, verify checksum, skip if present, fail loudly in CI. Windows x64/arm64
-      is pinned; a verified macOS static artifact is still needed.
+- [x] `scripts/fetch-binaries.mjs`: fetch ImageMagick per `platform-arch` into `resources/bin/…`,
+      verify the official Windows release checksums, bundle the verified Homebrew macOS bottle
+      with its dylib dependencies, skip if present, and fail loudly in CI. `--platform`/`--arch`
+      overrides support cross-fetching where the host architecture matches.
 - [x] `postinstall`: `electron-builder install-app-deps` **and** `node scripts/fetch-binaries.mjs`.
 - [x] `binaries.ts` resolves correctly **inside the packaged app** (resources path, not
       asar `__dirname`); packaging now includes and unpacks `resources/bin/**`.
