@@ -127,31 +127,39 @@ ImageMagick instead of sharp. The ImageMagick binary must exist at
 
 ## Phase 5 — Queue
 
-- [ ] `src/main/conversion/queue.ts`: batch creation, `batchId`, concurrency
+- [x] `src/main/conversion/queue.ts`: batch creation, `batchId`, concurrency
       `min(4, cpuCount)`, FIFO.
-- [ ] Per-job `AbortController`; check between phases and before rename.
-- [ ] Emit `ProgressEvent` at reading/converting/writing boundaries (monotonic percent).
-- [ ] Emit terminal events: `done` with `ConvertResult`, or `failed`/`cancelled`.
-- [ ] Pure `resolveOutputPath(input, to, outputDir, exists)` handling collisions (`-1`, `-2`, …)
+- [x] Per-job `AbortController`; check between phases and before rename.
+- [x] Emit `ProgressEvent` at reading/converting/writing boundaries (monotonic percent).
+- [x] Emit terminal events: `done` with `ConvertResult`, or `failed`/`cancelled`.
+- [x] Pure `resolveOutputPath(input, to, outputDir, exists)` handling collisions (`-1`, `-2`, …)
       and the "never equal to source" rule.
-- [ ] Cleanup: delete temp files on failure/cancel; never leave a `.tmp` behind.
-- [ ] Unit-test naming/collision logic exhaustively (incl. multi-dot names, no extension).
+- [x] Cleanup: delete temp files on failure/cancel; never leave a `.tmp` behind.
+- [x] Unit-test naming/collision logic exhaustively (incl. multi-dot names, no extension).
 
 **Done when:** `npm test` covers naming + concurrency scheduling without touching real files
 beyond a temp dir fixture.
 
 ---
 
-## Phase 6 — IPC & preload
+## Phase 6 — IPC & preload ✅
 
-- [ ] Implement every channel in `architecture.md` §5.4 in `src/main/ipc.ts`.
-- [ ] Validate renderer payloads (absolute paths, known `FormatId`, bounded arrays).
-- [ ] `src/preload/index.ts`: `contextBridge.exposeInMainWorld('api', …)` matching §5 exactly;
+- [x] Implement every channel in `architecture.md` §5.4 in `src/main/ipc.ts`.
+- [x] Validate renderer payloads (absolute paths, known `FormatId`, bounded arrays).
+- [x] `src/preload/index.ts`: `contextBridge.exposeInMainWorld('api', …)` matching §5 exactly;
       add `webUtils.getPathForFile` for dropped files.
-- [ ] Add `src/preload/index.d.ts` (or shared `Window` augmentation) so the renderer gets types.
-- [ ] Progress/job events: subscribe on the renderer, return an unsubscribe function.
+- [x] Add `src/preload/index.d.ts` (or shared `Window` augmentation) so the renderer gets types.
+- [x] Progress/job events: subscribe on the renderer, return an unsubscribe function.
 
 **Done when:** a temporary renderer button can call `getFormats()` and log the matrix.
+**Verified:** all twelve channels are wired. Invoke methods return typed `IpcResult<T>`; the
+preload never throws across the bridge. `validation.ts` rejects relative paths, unknown formats,
+malformed options, invalid batch IDs, and batches over 1000 files with `INVALID_REQUEST`, and
+re-derives file metadata from the path instead of trusting the renderer. `files.ts` stats dropped
+paths and skips directories/unreadable entries. `shared/window.d.ts` augments `Window` with the
+typed `WindowApi`. A CDP smoke run of the built app clicked the temporary "Log formats" button:
+`window.api` exposed all 13 members, the renderer logged `[formats] Array(8)`, and
+`getFormats()` resolved `{ ok: true }` with all 8 formats.
 
 ---
 

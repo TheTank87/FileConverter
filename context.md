@@ -18,11 +18,13 @@ the user's machine. Nothing is uploaded. The flagship example is **HEIC → PNG*
 
 See [`architecture.md`](./architecture.md) for the full technical design.
 
-**Current status:** Phase 5 (queue, naming & cancellation) complete and verified — batches run
-FIFO with bounded concurrency, per-job cancellation, monotonic progress, isolated failures, and
-atomic temp cleanup. The full check suite passes (41 passed, 3 ImageMagick integration tests skipped
-when the bundled binary is absent). The build sequence lives in [`todos.md`](./todos.md); work top
-to bottom and check items off as they land. Next up: Phase 6 (IPC & preload).
+**Current status:** Phase 6 (IPC & preload) complete and verified — every channel is wired, invoke
+results are typed `IpcResult<T>`, renderer payloads are validated, and progress/job events flow to
+the renderer with unsubscribe functions. The full check suite passes (50 passed, 3 ImageMagick
+integration tests skipped when the bundled binary is absent), and a CDP smoke run confirmed
+`window.api.getFormats()` returns all 8 formats from the built app. The build sequence lives in
+[`todos.md`](./todos.md); work top to bottom and check items off as they land.
+Next up: Phase 7 (renderer shell).
 
 **Test fixtures:** `samples/` (git-ignored) holds HEIC, AVIF, transparent PNG, JPG, static +
 animated WebP, 20-frame GIF, TIFF, BMP, a corrupt JPG, and an 8000×6250 (50 MP) JPG. They were
@@ -140,6 +142,9 @@ npm run build:win    # → dist/*.exe (NSIS installer + portable)
 - **Output collisions are reserved per batch:** `queue.ts` tracks resolved output paths while jobs
   run so two concurrent same-name jobs cannot both claim `<name>.<ext>` before either exists on
   disk. The pure naming helper trusts the caller's `exists` predicate.
+- **Renderer payloads are untrusted:** `validation.ts` gates every invoke, requires absolute paths,
+  bounds batches, and re-derives `FileInfo` metadata from the path. Invoke methods return
+  `IpcResult<T>` rather than throwing across the context bridge.
 
 ---
 
@@ -153,6 +158,8 @@ npm run build:win    # → dist/*.exe (NSIS installer + portable)
 | Change the conversion pipeline | `src/main/conversion/queue.ts`, `engine.ts` |
 | Change output naming / collisions | `src/main/conversion/naming.ts` |
 | Change the IPC surface | `shared/types.ts`, `src/main/ipc.ts`, `src/preload/index.ts` |
+| Validate an IPC payload | `src/main/validation.ts` |
+| Stat dropped files | `src/main/files.ts` |
 | Change the UI | `src/renderer/src/App.tsx` and `components/` |
 | Change theming | `src/renderer/src/styles/tokens.css` |
 | Adjust packaging | `electron-builder.yml` |

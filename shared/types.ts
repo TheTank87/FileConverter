@@ -80,6 +80,7 @@ export type ErrorCode =
   | 'UNREADABLE_FILE'
   | 'OUTPUT_NOT_WRITABLE'
   | 'ENGINE_MISSING'
+  | 'INVALID_REQUEST'
   | 'CANCELLED'
   | 'UNKNOWN'
 
@@ -132,3 +133,19 @@ export const IPC_CHANNELS = {
 } as const
 
 export type IpcChannel = (typeof IPC_CHANNELS)[keyof typeof IPC_CHANNELS]
+
+export interface WindowApi {
+  pickFiles(): Promise<IpcResult<FileInfo[]>>
+  getPathForFile(file: File): string
+  statFiles(paths: string[]): Promise<IpcResult<FileInfo[]>>
+  getFormats(): Promise<IpcResult<FormatDef[]>>
+  pickOutputFolder(): Promise<IpcResult<string | null>>
+  getSettings(): Promise<IpcResult<Settings>>
+  setSettings(patch: Partial<Settings>): Promise<IpcResult<Settings>>
+  startConversion(request: ConvertRequest): Promise<IpcResult<{ batchId: string }>>
+  cancelBatch(batchId: string): Promise<IpcResult<void>>
+  onProgress(callback: (event: ProgressEvent) => void): () => void
+  onJobDone(callback: (event: JobDoneEvent) => void): () => void
+  openPath(path: string): Promise<IpcResult<void>>
+  revealInFolder(path: string): Promise<IpcResult<void>>
+}

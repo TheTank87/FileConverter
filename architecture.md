@@ -245,6 +245,7 @@ export type ErrorCode =
   | 'UNREADABLE_FILE'
   | 'OUTPUT_NOT_WRITABLE'
   | 'ENGINE_MISSING'
+  | 'INVALID_REQUEST'
   | 'CANCELLED'
   | 'UNKNOWN'
 
@@ -273,21 +274,24 @@ recoverable instead of rejecting into the renderer.
 
 | Method | Returns | Purpose |
 |--------|---------|---------|
-| `pickFiles()` | `FileInfo[]` | Native open dialog (click-to-browse). |
+| `pickFiles()` | `IpcResult<FileInfo[]>` | Native open dialog (click-to-browse). |
 | `getPathForFile(file)` | `string` | Resolve OS path for a dropped `File` (via `webUtils`). |
-| `statFiles(paths[])` | `FileInfo[]` | Read name/size/detected type for dropped paths. |
-| `getFormats()` | `FormatDef[]` | Supported formats for the UI. |
-| `pickOutputFolder()` | `string \| null` | Choose an output directory. |
-| `getSettings() / setSettings()` | `Settings` | Persist output dir + theme. |
-| `startConversion(request)` | `{ batchId }` | Kick off a batch. |
+| `statFiles(paths[])` | `IpcResult<FileInfo[]>` | Read name/size/detected type for dropped paths. |
+| `getFormats()` | `IpcResult<FormatDef[]>` | Supported formats for the UI. |
+| `pickOutputFolder()` | `IpcResult<string \| null>` | Choose an output directory. |
+| `getSettings() / setSettings()` | `IpcResult<Settings>` | Persist output dir + theme. |
+| `startConversion(request)` | `IpcResult<{ batchId }>` | Kick off a batch. |
 | `onProgress(cb)` | `unsubscribe` | Subscribe to per-job progress. |
 | `onJobDone(cb)` | `unsubscribe` | Subscribe to per-job success/failure/cancel. |
-| `openPath(path)` | `void` | Open a file with the OS default app. |
-| `revealInFolder(path)` | `void` | Show a file in Finder/Explorer. |
-| `cancelBatch(batchId)` | `void` | Cancel in-flight work. |
+| `openPath(path)` | `IpcResult<void>` | Open a file with the OS default app. |
+| `revealInFolder(path)` | `IpcResult<void>` | Show a file in Finder/Explorer. |
+| `cancelBatch(batchId)` | `IpcResult<void>` | Cancel in-flight work. |
 
-All IPC channels are namespaced (`convert:start`, `settings:get`, …) and typed in
-`shared/types.ts`, which is imported by main, preload, and renderer.
+All invoke methods resolve to `IpcResult<T>`; the preload never throws across the bridge, so the
+renderer can switch on `error.code` instead of catching rejections. Channels are namespaced
+(`convert:start`, `settings:get`, …) and typed in `shared/types.ts` (`WindowApi`), which is
+imported by main, preload, and renderer. `shared/window.d.ts` augments the renderer's `Window`
+interface with `api`.
 
 ### 5.4 Channel map
 
@@ -307,8 +311,10 @@ All IPC channels are namespaced (`convert:start`, `settings:get`, …) and typed
 | `shell:reveal` | invoke | `string → void` |
 
 The preload exposes exactly these; anything not listed is unreachable from the renderer. Incoming
-payloads from the renderer are treated as untrusted and validated (paths must be absolute, `to`
-must be a known `FormatId`, arrays are bounded) before touching the filesystem.
+payloads from the renderer are treated as untrusted and validated in `src/main/validation.ts`
+(paths must be absolute, `to` must be a known `FormatId`, arrays are bounded, options are typed)
+before touching the filesystem. Renderer-supplied `FileInfo` metadata is re-derived from the path.
+Dialogs and `shell` calls are invoked with the requesting `BrowserWindow` as owner where applicable.
 
 ---
 
@@ -407,11 +413,14 @@ the-diat-converter/
 │  ├─ icon.png / icon.icns / icon.ico
 │  └─ bin/{darwin-arm64,darwin-x64,win32-x64}/   ← bundled CLIs (git-ignored)
 ├─ shared/
-│  └─ types.ts                 ← shared IPC + domain types
+│  ├─ types.ts                 ← shared IPC + domain types
+│  └─ window.d.ts              ← Window.api augmentation for the renderer
 └─ src/
    ├─ main/
    │  ├─ index.ts              ← app lifecycle, window, menu
    │  ├─ ipc.ts                ← IPC handler registration
+   │  ├─ validation.ts         ← untrusted renderer payload validation
+   │  ├─ files.ts              ← stat dropped/browsed paths
    │  ├─ settings.ts           ← persisted settings
    │  ├─ binaries.ts           ← resolve bundled CLI paths (asar-aware)
    │  └─ conversion/
