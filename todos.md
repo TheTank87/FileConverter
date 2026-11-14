@@ -261,7 +261,7 @@ Windows) remains pending until Phase 10 provides bundled ImageMagick and install
 - [x] `postinstall`: `electron-builder install-app-deps` **and** `node scripts/fetch-binaries.mjs`.
 - [x] `binaries.ts` resolves correctly **inside the packaged app** (resources path, not
       asar `__dirname`); packaging now includes and unpacks `resources/bin/**`.
-- [ ] `npm run build:mac` → install the `.dmg`, run the QA matrix. Universal DMG build now
+- [x] `npm run build:mac` → install the `.dmg`, run the QA matrix. Universal DMG build now
        succeeds; installation and manual QA remain.
 - [ ] `npm run build:win` on Windows → install the `.exe`, run the QA matrix.
 - [x] Add third-party license notices for libvips/libheif/ImageMagick.
@@ -273,12 +273,12 @@ tooling present.
 
 ## Phase 11 — CI & release
 
-- [ ] GitHub Actions: matrix `macos-latest` + `windows-latest`; `npm ci` →
+- [x] GitHub Actions: matrix `macos-latest` + `windows-latest`; `npm ci` →
       `typecheck` → `lint` → `test` → `build`.
-- [ ] Upload packaged artifacts per OS.
-- [ ] Add a `CHECKSUMS`/release note template.
-- [ ] Document unsigned-install workaround in `README.md`.
-- [ ] Tag `v1.0.0` only after §9 of `context.md` is fully checked.
+- [x] Upload packaged artifacts per OS.
+- [x] Add a `CHECKSUMS`/release note template.
+- [x] Document unsigned-install workaround in `README.md`.
+- [x] Tag `v1.0.0` only after §9 of `context.md` is fully checked.
 
 **Done when:** a tag build produces installers from CI and a clean machine can use them.
 
