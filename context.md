@@ -18,13 +18,15 @@ the user's machine. Nothing is uploaded. The flagship example is **HEIC → PNG*
 
 See [`architecture.md`](./architecture.md) for the full technical design.
 
-**Current status:** Phase 7 (renderer shell) complete and verified — the Zustand store, themed CSS
-shell, drop/browse ingestion, per-row overrides, progress, cancel, and output actions are wired to
-`window.api`. The full check suite passes (61 passed, 3 ImageMagick integration tests skipped when
-the bundled binary is absent), including renderer store tests with a stubbed API. CDP smoke runs
-converted a real dropped PNG and a 50-file batch (all succeeded, no console errors, list scrolls
-internally). The build sequence lives in [`todos.md`](./todos.md); work top to bottom and check
-items off as they land. Next up: Phase 8 (settings, theme & polish).
+**Current status:** Phase 8 (settings, theme & polish) complete and verified — theme boots before
+first paint via a mirrored localStorage value, target format/output folder/theme persist across
+restarts, failures show human sentences with expandable technical details, and the app accepts a
+new batch after a failed or cancelled one. App icons and `electron-builder.yml` identities are in
+place. The full check suite passes (67 passed, 3 ImageMagick integration tests skipped when the
+bundled binary is absent), including renderer store and error-presentation tests. CDP smoke runs
+restored saved settings on restart and confirmed a corrupt-file failure followed by a successful
+new batch. The build sequence lives in [`todos.md`](./todos.md); work top to bottom and check
+items off as they land. Next up: Phase 9 (test coverage).
 
 **Test fixtures:** `samples/` (git-ignored) holds HEIC, AVIF, transparent PNG, JPG, static +
 animated WebP, 20-frame GIF, TIFF, BMP, a corrupt JPG, and an 8000×6250 (50 MP) JPG. They were
@@ -53,6 +55,7 @@ Never commit them — they exist only to drive manual and engine tests.
 | 2026-11-13 | **ESM main process, CJS preload** (`out/preload/index.cjs`) | `"type": "module"` suits electron-vite 6; a sandboxed renderer requires a CommonJS preload. |
 | 2026-11-13 | **HEIC routes to ImageMagick, not sharp** | sharp 0.35's prebuilt libheif is AVIF-only; decoding HEIC fails with "Support for this compression format has not been built in: HEVC". |
 | 2026-11-13 | **Auto-orient always; strip EXIF/GPS by default** | `keepMetadata` defaults to false so GPS never leaks accidentally; ICC is kept when supported. Explicit `keepMetadata: true` keeps EXIF. |
+| 2026-11-14 | **Mirror the theme to localStorage for a pre-paint boot script** | The inline `index.html` script cannot read main-process `settings.json` before first paint; `settings.json` stays canonical and the mirror is rewritten whenever the theme is applied. |
 
 ---
 

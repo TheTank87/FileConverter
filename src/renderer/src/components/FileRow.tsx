@@ -1,6 +1,8 @@
 import type { FormatDef, Job, ProgressPhase } from '@shared/types'
+import { ErrorDetails } from './ErrorDetails'
 import { FormatPicker } from './FormatPicker'
 import { ProgressBar } from './ProgressBar'
+import { errorSentence } from '../lib/errors'
 import { formatBytes } from '../lib/format'
 import { canConvert, unknownError, useAppStore } from '../state/store'
 
@@ -134,10 +136,21 @@ function Status({ job, supported, percent, phase }: StatusProps) {
   }
 
   if (job.status === 'failed') {
+    if (job.error === undefined) {
+      return (
+        <span className="file-row__status-text" role="alert">
+          Conversion failed.
+        </span>
+      )
+    }
+
     return (
-      <span className="file-row__status-text" role="alert">
-        {job.error?.message ?? 'Conversion failed.'}
-      </span>
+      <>
+        <span className="file-row__status-text" role="alert">
+          {errorSentence(job.error)}
+        </span>
+        <ErrorDetails error={job.error} />
+      </>
     )
   }
 

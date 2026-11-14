@@ -4,6 +4,15 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="color-scheme" content="light dark" />
+    <script>
+      try {
+        const saved = localStorage.getItem('diat.theme')
+        document.documentElement.dataset.theme =
+          saved === 'light' || saved === 'dark' || saved === 'system' ? saved : 'system'
+      } catch {
+        document.documentElement.dataset.theme = 'system'
+      }
+    </script>
     <title>The Diat Converter</title>
   </head>
   <body>

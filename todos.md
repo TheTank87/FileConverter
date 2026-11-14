@@ -201,14 +201,26 @@ suffixes and no failed jobs.
 
 ## Phase 8 — Settings, theme & polish
 
-- [ ] Apply saved theme before first paint (avoid flash) via a tiny inline boot script.
-- [ ] Persist output folder + last used target format; restore on launch.
-- [ ] Display typed errors with a human sentence and an expandable "Details".
-- [ ] Confirm a cancelled/failed batch leaves the UI in a state that accepts a new batch.
-- [ ] Add app icon assets to `resources/` (`.icns`, `.ico`, `.png`).
-- [ ] Fill in window title, `appId`, `productName`.
+- [x] Apply saved theme before first paint (avoid flash) via a tiny inline boot script.
+- [x] Persist output folder + last used target format; restore on launch.
+- [x] Display typed errors with a human sentence and an expandable "Details".
+- [x] Confirm a cancelled/failed batch leaves the UI in a state that accepts a new batch.
+- [x] Add app icon assets to `resources/` (`.icns`, `.ico`, `.png`).
+- [x] Fill in window title, `appId`, `productName`.
 
 **Done when:** restart restores theme + output folder; all error states are reachable and legible.
+**Verified:** full check suite passes (67 passed, 3 ImageMagick tests skipped). `index.html` now
+sets `data-theme` from a mirrored localStorage value before the app module runs, and the store
+keeps that mirror in sync with `settings.json`. Changing the global target format persists
+`defaultFormat`, and load restores it alongside `outputDir` and `theme`. A CDP smoke run seeded
+settings (`dark`, JPG, custom output folder), reloaded, and observed the dark boot theme before
+app load; a corrupt JPG then showed a human sentence with an expandable Details panel containing
+`Code: UNREADABLE_FILE`, and a second file converted successfully after that failure ended the
+batch. After switching to Light + WEBP and restarting the app, the boot theme was Light and the
+target/output folder were restored, with no console errors. `resources/icon.{png,icns,ico}` are
+present (1024 PNG, ICNS set, 256 ICO), and `electron-builder.yml` now defines `appId`
+`com.diat.converter`, `productName` `The Diat Converter`, and the platform icon/category; the
+window title remains `The Diat Converter`.
 
 ---
 

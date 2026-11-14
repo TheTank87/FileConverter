@@ -1,10 +1,12 @@
 import { useEffect } from 'react'
 import { DropZone } from './components/DropZone'
+import { ErrorDetails } from './components/ErrorDetails'
 import { FileList } from './components/FileList'
 import { FormatPicker } from './components/FormatPicker'
 import { ProgressBar } from './components/ProgressBar'
 import { SettingsPanel } from './components/SettingsPanel'
 import { ThemeToggle } from './components/ThemeToggle'
+import { errorSentence } from './lib/errors'
 import { isConvertible, selectAggregateProgress, useAppStore } from './state/store'
 
 export function App() {
@@ -57,7 +59,10 @@ export function App() {
       <section className="app__hero" aria-label="Add files">
         {loadError !== null && (
           <div className="banner" role="alert">
-            <span>Could not load the app. {loadError.message}</span>
+            <div className="banner__body">
+              <span>Could not load the app. {errorSentence(loadError)}</span>
+              <ErrorDetails error={loadError} />
+            </div>
             <button type="button" className="button button--ghost" onClick={() => void load()}>
               Retry
             </button>
@@ -88,7 +93,10 @@ export function App() {
       <section className="app__actions" aria-label="Actions">
         {error !== null && (
           <div className="banner" role="alert">
-            <span>{error.message}</span>
+            <div className="banner__body">
+              <span>{errorSentence(error)}</span>
+              <ErrorDetails error={error} />
+            </div>
             <button type="button" className="button button--ghost" onClick={dismissError}>
               Dismiss
             </button>

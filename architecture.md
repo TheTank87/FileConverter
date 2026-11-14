@@ -279,7 +279,7 @@ recoverable instead of rejecting into the renderer.
 | `statFiles(paths[])` | `IpcResult<FileInfo[]>` | Read name/size/detected type for dropped paths. |
 | `getFormats()` | `IpcResult<FormatDef[]>` | Supported formats for the UI. |
 | `pickOutputFolder()` | `IpcResult<string \| null>` | Choose an output directory. |
-| `getSettings() / setSettings()` | `IpcResult<Settings>` | Persist output dir + theme. |
+| `getSettings() / setSettings()` | `IpcResult<Settings>` | Persist output dir + default target format + theme. |
 | `startConversion(request)` | `IpcResult<{ batchId }>` | Kick off a batch. |
 | `onProgress(cb)` | `unsubscribe` | Subscribe to per-job progress. |
 | `onJobDone(cb)` | `unsubscribe` | Subscribe to per-job success/failure/cancel. |
@@ -388,6 +388,10 @@ Rules of thumb:
 - **No filesystem access** in the store — every side effect goes through `window.api`.
 - Progress events are keyed by `jobId` so a late event after removal is ignored.
 - Dropped files are de-duplicated by absolute path.
+- The theme is mirrored to localStorage so the inline boot script in `index.html` can apply it
+  before first paint; `settings.json` remains the canonical store.
+- Error presentation helpers map `ConvertError.code` to a human sentence and keep the raw
+  code/message/detail behind a native `<details>` element.
 
 ### 6.2 Accessibility & keyboard
 
@@ -445,8 +449,8 @@ the-diat-converter/
          ├─ main.tsx
          ├─ App.tsx
          ├─ state/store.ts + store.test.ts
-         ├─ lib/format.ts
-         ├─ components/{DropZone,FileList,FileRow,FormatPicker,ProgressBar,ThemeToggle,SettingsPanel}.tsx
+         ├─ lib/{format,errors}.ts
+         ├─ components/{DropZone,FileList,FileRow,ErrorDetails,FormatPicker,ProgressBar,ThemeToggle,SettingsPanel}.tsx
          └─ styles/{tokens.css,global.css}
 ```
 

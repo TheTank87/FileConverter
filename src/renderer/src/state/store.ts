@@ -89,8 +89,17 @@ function createJob(file: FileInfo, to: FormatId): Job {
   }
 }
 
+const THEME_STORAGE_KEY = 'diat.theme'
+
 function applyTheme(theme: ThemeMode): void {
   if (typeof document !== 'undefined') document.documentElement.dataset.theme = theme
+
+  // Mirror the saved theme locally so the inline boot script can paint it before settings load.
+  try {
+    if (typeof localStorage !== 'undefined') localStorage.setItem(THEME_STORAGE_KEY, theme)
+  } catch {
+    // Storage can be unavailable under strict privacy settings; settings.json remains canonical.
+  }
 }
 
 export function unknownError(message: string): ConvertError {
@@ -200,10 +209,27 @@ export const useAppStore = create<AppState>((set, get) => ({
   setTargetFormat(format) {
     set((state) => ({
       targetFormat: format,
+      settings: { ...state.settings, defaultFormat: format },
       files: state.files.map((job) =>
         job.status === 'queued' && job.batchId === '' ? { ...job, to: format } : job
       )
     }))
+
+    void window.api
+      .setSettings({ defaultFormat: format })
+      .then((result) => {
+        if (!result.ok) {
+          set({ error: result.error })
+          return
+        }
+
+        set({ settings: result.value })
+      })
+      .catch((error: unknown) => {
+        set({
+          error: unknownError(error instanceof Error ? error.message : 'Could not save settings.')
+        })
+      })
   },
 
   async setOutputDir(dir) {

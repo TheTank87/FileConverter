@@ -93,6 +93,7 @@ function createApi(overrides: Partial<WindowApi> = {}): WindowApi {
 beforeEach(() => {
   onProgress = null
   onJobDone = null
+  vi.stubGlobal('window', { api: createApi() })
   useAppStore.setState({
     files: [],
     targetFormat: DEFAULT_SETTINGS.defaultFormat,
@@ -114,7 +115,12 @@ afterEach(() => {
 
 describe('renderer store', () => {
   it('loads formats and applies saved settings', async () => {
-    const saved: Settings = { ...SETTINGS, defaultFormat: 'jpg', theme: 'dark' }
+    const saved: Settings = {
+      ...SETTINGS,
+      outputDir: '/tmp/out',
+      defaultFormat: 'jpg',
+      theme: 'dark'
+    }
     const api = createApi({
       getSettings: vi.fn(async () => ok(saved))
     })
@@ -124,6 +130,7 @@ describe('renderer store', () => {
 
     expect(useAppStore.getState().formats).toEqual(FORMATS)
     expect(useAppStore.getState().targetFormat).toBe('jpg')
+    expect(useAppStore.getState().outputDir).toBe('/tmp/out')
     expect(useAppStore.getState().settings.theme).toBe('dark')
     expect(useAppStore.getState().loadError).toBeNull()
   })
@@ -141,6 +148,17 @@ describe('renderer store', () => {
 
     expect(useAppStore.getState().loadError?.message).toBe('no formats')
     expect(useAppStore.getState().loading).toBe(false)
+  })
+
+  it('persists target format changes', async () => {
+    const api = createApi()
+    vi.stubGlobal('window', { api })
+
+    useAppStore.getState().setTargetFormat('jpg')
+    await Promise.resolve()
+
+    expect(api.setSettings).toHaveBeenCalledWith({ defaultFormat: 'jpg' })
+    expect(useAppStore.getState().settings.defaultFormat).toBe('jpg')
   })
 
   it('adds files once and applies the current target format', () => {
@@ -242,6 +260,34 @@ describe('renderer store', () => {
 
     expect(useAppStore.getState().files[0]?.status).toBe('cancelled')
     expect(useAppStore.getState().batchId).toBeNull()
+  })
+
+  it('accepts a new batch after a failed and a cancelled job end the old batch', async () => {
+    const api = createApi()
+    vi.stubGlobal('window', { api })
+    subscribe(api)
+
+    useAppStore.getState().addFiles([file('/tmp/a.png'), file('/tmp/b.png')])
+    const [first, second] = useAppStore.getState().files
+    await useAppStore.getState().start()
+
+    onJobDone?.({
+      jobId: first?.id ?? '',
+      error: { code: 'UNREADABLE_FILE', message: 'Could not read the image.' }
+    })
+    onJobDone?.({
+      jobId: second?.id ?? '',
+      error: { code: 'CANCELLED', message: 'Conversion cancelled.' }
+    })
+
+    expect(useAppStore.getState().batchId).toBeNull()
+
+    useAppStore.getState().addFiles([file('/tmp/c.png')])
+    expect(selectConvertibleFiles(useAppStore.getState())).toHaveLength(1)
+
+    await useAppStore.getState().start()
+    expect(api.startConversion).toHaveBeenCalledTimes(2)
+    expect(useAppStore.getState().batchId).toBe('batch-1')
   })
 
   it('ignores late progress for a finished job', () => {
