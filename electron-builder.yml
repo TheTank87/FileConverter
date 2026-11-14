@@ -10,17 +10,19 @@ mac:
   target:
     - dmg
   x64ArchFiles: '**/*.*'
+  extraResources:
+    - from: resources/bin/darwin-${arch}
+      to: bin/darwin-${arch}
 
 win:
   icon: icon.ico
   target:
     - nsis
     - portable
+  extraResources:
+    - from: resources/bin/win32-${arch}
+      to: bin/win32-${arch}
 
 files:
   - out/**
   - package.json
-
-extraResources:
-  - from: resources/bin
-    to: bin
