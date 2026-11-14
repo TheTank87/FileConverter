@@ -93,29 +93,35 @@ dev-logged fallbacks until Phase 6.
 
 ---
 
-## Phase 4 — Formats & engines
+## Phase 4 — Formats & engines ✅
 
-- [ ] `src/main/conversion/formats.ts`: format matrix for heic/png/jpg/webp/avif/tiff/gif/bmp
+- [x] `src/main/conversion/formats.ts`: format matrix for heic/png/jpg/webp/avif/tiff/gif/bmp
       (`id`, `label`, `extensions[]`, `mime`, `kind`, `canRead`, `canWrite`, `defaultOptions`).
-- [ ] Export pure helpers: `detectFormat(path)`, `resolveOutputFormat(from, to)`,
+- [x] Export pure helpers: `detectFormat(path)`, `resolveOutputFormat(from, to)`,
       `isSupported(from, to)`.
-- [ ] `src/main/conversion/engine.ts`: `ConversionEngine` interface + ordered registry +
+- [x] `src/main/conversion/engine.ts`: `ConversionEngine` interface + ordered registry +
       `resolveEngine(from, to)` returning a typed error when nothing matches.
-- [ ] `src/main/conversion/sharpEngine.ts`:
-  - [ ] `canConvert` from the matrix.
-  - [ ] decode/encode with correct options; `animated: true` for GIF/WEBP when applicable.
-  - [ ] orientation + metadata handling per open question #1.
-  - [ ] transparent → JPG background behavior (white).
-  - [ ] write to temp file, then rename; remove temp on failure/abort.
-- [ ] `src/main/conversion/magickEngine.ts`:
-  - [ ] Route BMP (and any sharp gap) here; `sharpEngine.canConvert` must return `false` for it.
-  - [ ] `execFile(magickPath, [...])` — never a shell string.
-  - [ ] map stderr to a `ConvertError`; include it only in `detail`.
-  - [ ] same temp-file/rename contract as sharp.
-- [ ] Unit-test `detectFormat` and `resolveEngine` priority with fake engines.
+- [x] `src/main/conversion/sharpEngine.ts`:
+  - [x] `canConvert` from the matrix.
+  - [x] decode/encode with correct options; `animated: true` for GIF/WEBP when applicable.
+  - [x] orientation + metadata handling per open question #1.
+  - [x] transparent → JPG background behavior (white).
+  - [x] write to temp file, then rename; remove temp on failure/abort.
+- [x] `src/main/conversion/magickEngine.ts`:
+  - [x] Route BMP (and any sharp gap) here; `sharpEngine.canConvert` must return `false` for it.
+  - [x] `execFile(magickPath, [...])` — never a shell string.
+  - [x] map stderr to a `ConvertError`; include it only in `detail`.
+  - [x] same temp-file/rename contract as sharp.
+- [x] Unit-test `detectFormat` and `resolveEngine` priority with fake engines.
 
-**Done when:** a Node script (or temporary test) converts the sample HEIC → PNG via sharp, and
-a format only ImageMagick handles converts via the fallback.
+**Done when:** a Node script (or temporary test) converts the sample HEIC → PNG, and a format only
+ImageMagick handles converts via the fallback.
+**Verified:** 29 tests pass, including HEIC → PNG and BMP → PNG through ImageMagick, PNG → BMP,
+AVIF → PNG via sharp, animation, orientation, metadata retention, white flattening, corrupt input,
+and cancellation.
+**Correction:** sharp 0.35's prebuilt libheif has no HEVC decoder, so HEIC read routes to
+ImageMagick instead of sharp. The ImageMagick binary must exist at
+`resources/bin/<platform>-<arch>/` (Phase 10 automates the fetch).
 
 ---
 

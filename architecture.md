@@ -67,7 +67,7 @@
 | UI                   | **React 19 + TypeScript**                 | Component model fits the widget/decoration roadmap. |
 | State                | **Zustand**                               | Minimal, no boilerplate, easy to extend. |
 | Styling              | **Plain CSS + CSS variables**             | Zero runtime, trivially themeable (light/dark tokens). |
-| Image engine (fast)  | **sharp** (libvips 8.18, includes libheif)| In-process, fast, prebuilt binaries ship HEIC/AVIF support. |
+| Image engine (fast)  | **sharp** (libvips 8.18, includes libheif)| In-process, fast, prebuilt binaries ship AVIF support (no HEVC/HEIC decode). |
 | Image engine (fallback)| **ImageMagick** (bundled static CLI)    | Broad format coverage; also the seam for future formats. |
 | Packaging            | **electron-builder**                      | `.dmg` for macOS, NSIS `.exe` + portable for Windows. |
 | Tests                | **Vitest**                                | Unit tests for pure logic (format matrix, naming, engine pick). |
@@ -95,12 +95,13 @@ export interface ConversionEngine {
 }
 ```
 
-- **`sharpEngine`** — decodes with libvips, encodes to the target. Handles HEIC/AVIF/WEBP/TIFF/
-  GIF/PNG/JPEG (read + write; SVG read-only). Multi-frame (GIF) handled with `animated: true`.
-  BMP is **not** in the prebuilt libvips format set, so it is declared magick-only.
+- **`sharpEngine`** — decodes with libvips, encodes to the target. Handles AVIF/WEBP/TIFF/GIF/
+  PNG/JPEG (read + write). Multi-frame (GIF/WEBP) uses `animated: true` only when the target is
+  animated-capable. BMP is absent from the prebuilt libvips set, and the prebuilt libheif lacks an
+  HEVC decoder, so BMP **and HEIC read** are declared magick-only.
 - **`magickEngine`** — shells out to the bundled `magick` binary via `execFile` (no shell, so no
   command-injection surface). Used when `sharp` reports it cannot perform the conversion — in v1
-  this is at minimum BMP, and it is the safety net for any future gap.
+  this is BMP (read/write) and HEIC (read). It is also the safety net for future gaps.
 
 ### 4.2 Engine selection
 
@@ -138,7 +139,7 @@ without touching IPC signatures.
 ```ts
 export interface ConvertOptions {
   quality?: number           // 1–100; encoder default when omitted
-  keepMetadata?: boolean     // default true, silently ignored where unsupported
+  keepMetadata?: boolean     // default false: auto-orient, strip EXIF/GPS, keep ICC
 }
 ```
 
@@ -523,8 +524,8 @@ These are deliberately unresolved; decide before the code that depends on them l
 
 | # | Question | Blocks | Lean |
 |---|----------|--------|------|
-| 1 | Do we keep originals' EXIF orientation and color profile by default? | sharp engine | Keep orientation, strip GPS. |
-| 2 | Default JPG background for transparency: white or black? | sharp engine, UI copy | White, documented in the row tooltip. |
+| 1 | Do we keep originals' EXIF orientation and color profile by default? | sharp engine | **Resolved:** always auto-orient; strip EXIF/GPS by default; keep ICC when supported. |
+| 2 | Default JPG background for transparency: white or black? | sharp engine, UI copy | **Resolved:** white; document in the row tooltip. |
 | 3 | Should "same folder" mean *beside source* or *last used folder* when files span folders? | queue | Beside each source. |
 | 4 | Bundle ImageMagick on day one, or ship sharp-only and add the fallback once a gap appears? | fetch script, app size | Bundle from the start for coverage. |
 | 5 | Target minimum OS versions (macOS 12? Windows 10 21H2?). | electron-builder | macOS 12+, Win10 21H2+. |

@@ -18,10 +18,10 @@ the user's machine. Nothing is uploaded. The flagship example is **HEIC → PNG*
 
 See [`architecture.md`](./architecture.md) for the full technical design.
 
-**Current status:** Phase 3 (main process foundation) complete — window lifecycle, single-instance
-lock, navigation hardening, application menu, persisted settings, binary path resolution, and the
-IPC wrapper skeleton are in place. The build sequence lives in [`todos.md`](./todos.md); work top to
-bottom and check items off as they land. Next up: Phase 4 (formats & engines).
+**Current status:** Phase 4 (formats & engines) complete — the format matrix, engine registry,
+`sharp` encoder, and ImageMagick fallback are in place and covered by integration tests. The build
+sequence lives in [`todos.md`](./todos.md); work top to bottom and check items off as they land.
+Next up: Phase 5 (queue, naming & cancellation).
 
 **Test fixtures:** `samples/` (git-ignored) holds HEIC, AVIF, transparent PNG, JPG, static +
 animated WebP, 20-frame GIF, TIFF, BMP, a corrupt JPG, and an 8000×6250 (50 MP) JPG. They were
@@ -35,7 +35,7 @@ Never commit them — they exist only to drive manual and engine tests.
 | Date | Decision | Rationale |
 |------|----------|-----------|
 | 2026-11-12 | **Electron + React + Vite + TypeScript** | Node available, one codebase for Win+Mac, best fit for a web-style minimal UI, huge ecosystem. |
-| 2026-11-12 | **`sharp` (libvips) as primary engine, bundled ImageMagick CLI as fallback** | libvips prebuilts already include libheif (HEIC) and AVIF; fast in-process path. ImageMagick guarantees coverage for edge formats. |
+| 2026-11-12 | **`sharp` (libvips) as primary engine, bundled ImageMagick CLI as fallback** | Fast in-process path for AVIF/WEBP/TIFF/GIF/PNG/JPEG; ImageMagick guarantees coverage for BMP and HEIC. |
 | 2026-11-12 | **Images only for v1** | Focused, polished first release; pipeline designed for audio/video later. |
 | 2026-11-12 | **Output defaults to source folder, with "choose folder" option** | Matches the local-first workflow; least surprising default. |
 | 2026-11-12 | **`electron-vite`** for build tooling | Simple main/preload/renderer bundling with HMR and TS-first DX. |
@@ -48,6 +48,8 @@ Never commit them — they exist only to drive manual and engine tests.
 | 2026-11-13 | **No output ever overwrites the source** (same-path forces a suffix) | Data safety beats convenience; matches the local-first promise. |
 | 2026-11-13 | **Product name `The Diat Converter`, appId `com.diat.converter`** | Fixed string used in window title, installers, and `electron-builder.yml`. |
 | 2026-11-13 | **ESM main process, CJS preload** (`out/preload/index.cjs`) | `"type": "module"` suits electron-vite 6; a sandboxed renderer requires a CommonJS preload. |
+| 2026-11-13 | **HEIC routes to ImageMagick, not sharp** | sharp 0.35's prebuilt libheif is AVIF-only; decoding HEIC fails with "Support for this compression format has not been built in: HEVC". |
+| 2026-11-13 | **Auto-orient always; strip EXIF/GPS by default** | `keepMetadata` defaults to false so GPS never leaks accidentally; ICC is kept when supported. Explicit `keepMetadata: true` keeps EXIF. |
 
 ---
 
@@ -119,9 +121,13 @@ npm run build:win    # → dist/*.exe (NSIS installer + portable)
   into `postinstall`) so it matches Electron's ABI. Prebuilt binaries mean no compiler needed.
 - **libheif licensing:** libvips/sharp bundle libheif (LGPL). We link dynamically via the prebuilt
   sharp package; keep third-party license notices when distributing.
+- **sharp cannot decode HEIC:** its prebuilt libheif only ships the AV1 decoder. The error is
+  "Support for this compression format has not been built in: HEVC". HEIC read routes to
+  `magickEngine`; do not advertise HEIC as sharp-capable.
 - **HEIC decode is CPU-heavy** for large images — hence the concurrency limit in the queue.
-- **Animated formats:** GIF/WEBP animation requires `sharp(..., { animated: true })`; static
-  conversion otherwise collapses to the first frame.
+- **Animated formats:** GIF/WEBP animation requires `sharp(..., { animated: true })` on the input,
+  and an animated-capable target (GIF or WEBP). Using `animated: true` for PNG produces a tall
+  filmstrip; for static targets, leave it off so only the first frame is used.
 - **BMP is not in prebuilt sharp:** libvips has no BMP codec in the prebuilt package, so BMP
   conversions must resolve to `magickEngine`. Do not advertise BMP as sharp-capable.
 - **`FileInfo.format` can be `null`:** unknown extensions must fail per-row, not throw out of
@@ -159,9 +165,10 @@ npm run build:win    # → dist/*.exe (NSIS installer + portable)
 | OS | macOS 12+ / Windows 10 21H2+ | Current dev machine is Windows (win32). Windows ARM64 out of scope for v1. |
 | Fixtures | `sips` + `ffmpeg` (dev only) | Not app dependencies; used once to generate `samples/`. |
 
-> `postinstall` runs `electron-builder install-app-deps` (sharp ABI match) and
-> `scripts/fetch-binaries.mjs` (ImageMagick). If either is skipped, conversion will fail with
-> `ENGINE_MISSING` — that is a setup error, not an app bug.
+> `postinstall` currently runs only `electron-builder install-app-deps` (sharp ABI match).
+> The ImageMagick fetch script lands in Phase 10; until then, place `magick`/`magick.exe` in
+> `resources/bin/<platform>-<arch>/` manually. If it is missing, HEIC and BMP conversions fail with
+> `ENGINE_MISSING` — a setup error, not an app bug.
 
 ---
 

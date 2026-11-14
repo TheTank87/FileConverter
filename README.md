@@ -43,10 +43,10 @@ Electron + React + TypeScript, built with `electron-vite`, state via Zustand, pa
 
 ## Status
 
-Early development. Phase 3 (main process foundation) is complete; the window lifecycle, settings
-persistence, and IPC foundation are in place. The remaining work is tracked in
-[`todos.md`](./todos.md). Planned for later releases: per-file options (quality, resize),
-audio/video via FFmpeg, and document conversion.
+Early development. Phase 4 (formats & engines) is complete; the format matrix, `sharp` encoder, and
+ImageMagick fallback are in place. The remaining work is tracked in [`todos.md`](./todos.md).
+Planned for later releases: per-file options (quality, resize), audio/video via FFmpeg, and document
+conversion.
 
 ## Documentation
 
