@@ -73,7 +73,9 @@ function runFfmpeg(
 ): Promise<void> {
   const args = ['-y', '-i', input.inputPath]
   if (input.options.keepMetadata !== true) args.push('-map_metadata', '-1')
-  args.push('-vn', '-progress', 'pipe:2', tempPath)
+  const audioFormats = new Set(['mp3', 'wav', 'flac', 'aac', 'ogg'])
+  if (audioFormats.has(input.from)) args.push('-vn')
+  args.push('-progress', 'pipe:2', tempPath)
 
   return new Promise((resolve, reject) => {
     const child = spawn(binary, args, { windowsHide: true })

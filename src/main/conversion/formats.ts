@@ -30,7 +30,7 @@ const SHARP_READ = ['png', 'jpg', 'webp', 'avif', 'tiff', 'gif'] as const
 const SHARP_WRITE = ['png', 'jpg', 'webp', 'avif', 'tiff', 'gif'] as const
 const MAGICK_READ = ['heic', 'png', 'jpg', 'webp', 'avif', 'tiff', 'gif', 'bmp'] as const
 const MAGICK_WRITE = ['png', 'jpg', 'webp', 'avif', 'tiff', 'gif', 'bmp'] as const
-const FFMPEG_FORMATS = ['mp3', 'wav', 'flac', 'aac', 'ogg'] as const
+const FFMPEG_FORMATS = ['mp3', 'wav', 'flac', 'aac', 'ogg', 'mp4', 'mov', 'webm', 'mkv'] as const
 
 const LOSSY_DEFAULT: ConvertOptions = { quality: 80, keepMetadata: false }
 const LOSSLESS_DEFAULT: ConvertOptions = { keepMetadata: false }
@@ -138,6 +138,38 @@ const SEEDS: readonly FormatSeed[] = [
     extensions: ['ogg', 'oga'],
     mime: 'audio/ogg',
     kind: 'audio',
+    defaultOptions: { keepMetadata: false }
+  },
+  {
+    id: 'mp4',
+    label: 'MP4',
+    extensions: ['mp4', 'm4v'],
+    mime: 'video/mp4',
+    kind: 'video',
+    defaultOptions: { keepMetadata: false }
+  },
+  {
+    id: 'mov',
+    label: 'MOV',
+    extensions: ['mov'],
+    mime: 'video/quicktime',
+    kind: 'video',
+    defaultOptions: { keepMetadata: false }
+  },
+  {
+    id: 'webm',
+    label: 'WEBM',
+    extensions: ['webm'],
+    mime: 'video/webm',
+    kind: 'video',
+    defaultOptions: { keepMetadata: false }
+  },
+  {
+    id: 'mkv',
+    label: 'MKV',
+    extensions: ['mkv'],
+    mime: 'video/x-matroska',
+    kind: 'video',
     defaultOptions: { keepMetadata: false }
   }
 ]

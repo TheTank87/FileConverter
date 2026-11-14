@@ -20,11 +20,12 @@ See [`architecture.md`](./architecture.md) for the full technical design.
 
 **Current status:** v1.0 release foundations, v1.1 per-file image options, v1.2 widgets, and v2
 audio conversion are implemented. The project supports image conversion through Sharp and
-ImageMagick plus MP3/WAV/FLAC/AAC/OGG conversion through a bundled FFmpeg engine. The validation
+ImageMagick plus MP3/WAV/FLAC/AAC/OGG audio and MP4/MOV/WEBM/MKV video conversion through a bundled
+FFmpeg engine. The validation
 suite has 115 passing tests, and typecheck, lint, test, and production build all pass. Universal
 macOS packaging support is in place; installed-app QA and the Windows installer matrix remain
-environment-dependent follow-up work. The next backlog item is v2.1 video conversion (MP4, MOV,
-WEBM, MKV). The authoritative checklist is [`todos.md`](./todos.md).
+environment-dependent follow-up work. The next backlog item is v3 document conversion. The
+authoritative checklist is [`todos.md`](./todos.md).
 
 **Test fixtures:** `samples/` (git-ignored) holds HEIC, AVIF, transparent PNG, JPG, static +
 animated WebP, 20-frame GIF, TIFF, BMP, a corrupt JPG, and an 8000×6250 (50 MP) JPG. They were
@@ -58,6 +59,7 @@ Never commit them — they exist only to drive manual and engine tests.
 | 2026-11-14 | **v1.2 widgets use renderer-local persistence** | Recent outputs and presets are lightweight local metadata; localStorage keeps them offline without expanding the main-process settings schema. |
 | 2026-11-14 | **FFmpeg is bundled from `ffmpeg-static`** | Audio conversion uses a platform-specific FFmpeg binary copied into `resources/bin/<platform>-<arch>` during postinstall, keeping packaged conversion offline and outside ASAR. |
 | 2026-11-14 | **Audio uses the existing queue and IPC pipeline** | FFmpeg jobs share validation, output collision handling, cancellation, progress events, atomic writes, and batch isolation with image jobs rather than introducing a second workflow. |
+| 2026-11-14 | **Video uses the same FFmpeg engine as audio** | MP4, MOV, WEBM, and MKV are container targets in the shared format matrix; video streams are preserved while audio-only inputs continue to use `-vn`. |
 
 ---
 
@@ -152,6 +154,8 @@ npm run build:win    # → dist/*.exe (NSIS installer + portable)
   `IpcResult<T>` rather than throwing across the context bridge.
 - **Audio formats are FFmpeg-only:** MP3, WAV, FLAC, AAC, and OGG are declared in the shared format
   matrix and resolve to `ffmpegEngine`; Sharp and ImageMagick must not advertise audio capability.
+- **Video formats are FFmpeg-only:** MP4, MOV, WEBM, and MKV are declared in the shared format
+  matrix and resolve to `ffmpegEngine`; the FFmpeg command preserves video streams for these jobs.
 - **FFmpeg binaries are external resources:** `scripts/fetch-binaries.mjs` copies the platform
   binary into `resources/bin/<platform>-<arch>`, and electron-builder packages that directory
   outside ASAR. Universal macOS preparation stages the x64 FFmpeg binary alongside x64 Sharp.

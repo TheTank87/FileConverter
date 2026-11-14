@@ -14,7 +14,11 @@ export const FORMAT_IDS = [
   'wav',
   'flac',
   'aac',
-  'ogg'
+  'ogg',
+  'mp4',
+  'mov',
+  'webm',
+  'mkv'
 ] as const
 
 export type FormatId = (typeof FORMAT_IDS)[number]

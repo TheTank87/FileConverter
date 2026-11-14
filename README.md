@@ -21,6 +21,7 @@ can open anywhere.
 - After converting, **open the result** or reveal it in Finder/Explorer.
 - Reorder queued files, save reusable presets, and revisit recent conversions.
 - Convert audio between MP3, WAV, FLAC, AAC, and OGG using the bundled FFmpeg engine.
+- Convert video between MP4, MOV, WEBM, and MKV using the same offline FFmpeg pipeline.
 
 ## Supported formats (v1: images)
 
@@ -73,6 +74,12 @@ Audio conversion supports MP3, WAV, FLAC, AAC, and OGG. FFmpeg is bundled during
 for the current platform, and audio jobs use the same queued batch workflow, cancellation,
 progress reporting, unique output naming, and atomic writes as image jobs. Audio metadata is
 removed by default; the per-file **Keep metadata** option is available for audio jobs as well.
+
+### Video conversion
+
+Video conversion supports MP4, MOV, WEBM, and MKV. Video jobs share the same batch queue,
+cancellation, progress reporting, collision-safe naming, and atomic writes as image and audio jobs.
+Metadata is removed by default, with an explicit **Keep metadata** option for queued video files.
 
 ## Documentation
 

@@ -82,79 +82,80 @@ export function FileRow({ job, formats }: FileRowProps) {
         />
       </div>
 
-      {editable && (source?.kind === 'image' || source?.kind === 'audio') && (
-        <div className="file-row__options">
-          {source.kind === 'image' && (
-            <label>
-              <span>Quality</span>
+      {editable &&
+        (source?.kind === 'image' || source?.kind === 'audio' || source?.kind === 'video') && (
+          <div className="file-row__options">
+            {source.kind === 'image' && (
+              <label>
+                <span>Quality</span>
+                <input
+                  type="number"
+                  min="1"
+                  max="100"
+                  step="1"
+                  value={job.options.quality ?? ''}
+                  placeholder="Default"
+                  onChange={(event) =>
+                    setFileOptions(job.id, { quality: optionalNumber(event.target.value) })
+                  }
+                />
+              </label>
+            )}
+            {source.kind === 'image' && (
+              <label>
+                <span>Width</span>
+                <input
+                  type="number"
+                  min="1"
+                  max="20000"
+                  step="1"
+                  value={job.options.resizeWidth ?? ''}
+                  placeholder="Auto"
+                  onChange={(event) =>
+                    setFileOptions(job.id, { resizeWidth: optionalNumber(event.target.value) })
+                  }
+                />
+              </label>
+            )}
+            {source.kind === 'image' && (
+              <label>
+                <span>Height</span>
+                <input
+                  type="number"
+                  min="1"
+                  max="20000"
+                  step="1"
+                  value={job.options.resizeHeight ?? ''}
+                  placeholder="Auto"
+                  onChange={(event) =>
+                    setFileOptions(job.id, { resizeHeight: optionalNumber(event.target.value) })
+                  }
+                />
+              </label>
+            )}
+            {source.kind === 'image' && job.to === 'jpg' && (
+              <label>
+                <span>Background</span>
+                <input
+                  type="text"
+                  value={job.options.backgroundColor ?? '#ffffff'}
+                  pattern="#[0-9a-fA-F]{6,8}"
+                  onChange={(event) =>
+                    setFileOptions(job.id, { backgroundColor: event.target.value })
+                  }
+                />
+              </label>
+            )}
+            <label className="file-row__checkbox">
               <input
-                type="number"
-                min="1"
-                max="100"
-                step="1"
-                value={job.options.quality ?? ''}
-                placeholder="Default"
-                onChange={(event) =>
-                  setFileOptions(job.id, { quality: optionalNumber(event.target.value) })
-                }
+                type="checkbox"
+                checked={job.options.keepMetadata === true}
+                onChange={(event) => setFileOptions(job.id, { keepMetadata: event.target.checked })}
               />
+              <span>Keep metadata</span>
             </label>
-          )}
-          {source.kind === 'image' && (
-            <label>
-              <span>Width</span>
-              <input
-                type="number"
-                min="1"
-                max="20000"
-                step="1"
-                value={job.options.resizeWidth ?? ''}
-                placeholder="Auto"
-                onChange={(event) =>
-                  setFileOptions(job.id, { resizeWidth: optionalNumber(event.target.value) })
-                }
-              />
-            </label>
-          )}
-          {source.kind === 'image' && (
-            <label>
-              <span>Height</span>
-              <input
-                type="number"
-                min="1"
-                max="20000"
-                step="1"
-                value={job.options.resizeHeight ?? ''}
-                placeholder="Auto"
-                onChange={(event) =>
-                  setFileOptions(job.id, { resizeHeight: optionalNumber(event.target.value) })
-                }
-              />
-            </label>
-          )}
-          {source.kind === 'image' && job.to === 'jpg' && (
-            <label>
-              <span>Background</span>
-              <input
-                type="text"
-                value={job.options.backgroundColor ?? '#ffffff'}
-                pattern="#[0-9a-fA-F]{6,8}"
-                onChange={(event) =>
-                  setFileOptions(job.id, { backgroundColor: event.target.value })
-                }
-              />
-            </label>
-          )}
-          <label className="file-row__checkbox">
-            <input
-              type="checkbox"
-              checked={job.options.keepMetadata === true}
-              onChange={(event) => setFileOptions(job.id, { keepMetadata: event.target.checked })}
-            />
-            <span>Keep metadata</span>
-          </label>
-        </div>
-      )}
+          </div>
+        )}
 
       <button
         type="button"

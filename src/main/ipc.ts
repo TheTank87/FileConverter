@@ -18,14 +18,16 @@ import { parseBatchId, parseConvertRequest, parsePath, parsePathList } from './v
 
 const IMAGE_EXTENSIONS = [...new Set(FORMAT_LIST.flatMap((format) => format.extensions))]
 
-const AUDIO_EXTENSIONS = [
+const MEDIA_EXTENSIONS = [
   ...new Set(
-    FORMAT_LIST.filter((format) => format.kind === 'audio').flatMap((format) => format.extensions)
+    FORMAT_LIST.filter((format) => format.kind === 'audio' || format.kind === 'video').flatMap(
+      (format) => format.extensions
+    )
   )
 ]
 
 const FILE_FILTERS: FileFilter[] = [
-  { name: 'Images and audio', extensions: [...IMAGE_EXTENSIONS, ...AUDIO_EXTENSIONS] },
+  { name: 'Images, audio, and video', extensions: [...IMAGE_EXTENSIONS, ...MEDIA_EXTENSIONS] },
   { name: 'All Files', extensions: ['*'] }
 ]
 

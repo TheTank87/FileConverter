@@ -40,7 +40,7 @@ describe('detectFormat', () => {
 })
 
 describe('format matrix', () => {
-  it('declares all v1 formats exactly once', () => {
+  it('declares every format exactly once', () => {
     expect(FORMAT_LIST).toHaveLength(FORMAT_IDS.length)
     expect(FORMAT_LIST.map((format) => format.id)).toEqual([...FORMAT_IDS])
     expect(new Set(FORMAT_LIST.map((format) => format.id)).size).toBe(FORMAT_IDS.length)
@@ -102,6 +102,14 @@ describe('format matrix', () => {
     expect(engineCanConvert('ffmpeg', 'flac', 'ogg')).toBe(true)
     expect(engineCanConvert('magick', 'wav', 'mp3')).toBe(false)
     expect(isSupported('mp3', 'wav')).toBe(true)
+  })
+
+  it('routes video formats through FFmpeg', () => {
+    expect(detectFormat('movie.MP4')).toBe('mp4')
+    expect(detectFormat('movie.mkv')).toBe('mkv')
+    expect(engineCanConvert('ffmpeg', 'mp4', 'webm')).toBe(true)
+    expect(engineCanConvert('ffmpeg', 'mov', 'mkv')).toBe(true)
+    expect(isSupported('webm', 'mp4')).toBe(true)
   })
 
   it('treats unknown format ids as unsupported', () => {
