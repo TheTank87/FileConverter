@@ -18,15 +18,17 @@ the user's machine. Nothing is uploaded. The flagship example is **HEIC → PNG*
 
 See [`architecture.md`](./architecture.md) for the full technical design.
 
-**Current status:** v1.0 release foundations, v1.1 per-file image options, v1.2 widgets, and v2
-audio conversion are implemented. The project supports image conversion through Sharp and
-ImageMagick plus MP3/WAV/FLAC/AAC/OGG audio and MP4/MOV/WEBM/MKV video conversion through a bundled
-FFmpeg engine, plus PDF ↔ raster-image conversion through ImageMagick. The validation
-suite has 115 passing tests, and typecheck, lint, test, and production build all pass. Universal
-macOS packaging support is in place; installed-app QA and the Windows installer matrix remain
-environment-dependent follow-up work. v3.1 PDF ↔ raster-image conversion and the v3.2 Pandoc
-document engine are implemented. The macOS Pandoc bundle is verified; Windows binary packaging
-and clean-install validation remain release work. The authoritative checklist is [`todos.md`](./todos.md).
+**Current status:** v1.0 release foundations, v1.1 per-file image options, v1.2 widgets, v2
+audio/video conversion, v3.1 PDF ↔ raster-image conversion, and v3.2 Pandoc document conversion
+are implemented. The project supports image conversion through Sharp and ImageMagick, media
+conversion through bundled FFmpeg, and TXT/Markdown/HTML/DOCX/ODT conversion through bundled
+Pandoc. The validation suite has 121 passing tests; typecheck, lint, test, and production build
+pass. A native Apple Silicon macOS package now builds successfully as
+`dist/The Diat Converter-0.1.0-arm64.dmg`. Universal packaging remains optional and blocked on a
+separately prepared Intel resource bundle because this Apple Silicon machine cannot produce the
+matching x64 ImageMagick, Ghostscript, and Pandoc binaries locally. Windows installer packaging,
+clean-install QA, and code signing/notarization remain release work. The authoritative checklist
+is [`todos.md`](./todos.md).
 
 **Test fixtures:** `samples/` (git-ignored) holds HEIC, AVIF, transparent PNG, JPG, static +
 animated WebP, 20-frame GIF, TIFF, BMP, a corrupt JPG, and an 8000×6250 (50 MP) JPG. They were
@@ -64,6 +66,7 @@ Never commit them — they exist only to drive manual and engine tests.
 | 2026-11-14 | **v3 is split into PDF raster conversion first, Pandoc later** | PDF ↔ image conversion can build on the bundled ImageMagick path. Pandoc requires separate platform binaries, licensing review, and clean packaged-install validation, so it is not advertised or marked complete until those prerequisites are met. |
 | 2026-11-14 | **PDF uses ImageMagick at 150 DPI for rasterization** | PDF is a document format but PDF ↔ PNG/JPG/TIFF stays within the verified bundled ImageMagick pipeline; PDF inputs use an explicit 150 DPI density for predictable raster output. |
 | 2026-11-14 | **Pandoc supports a bounded document set** | TXT, Markdown, HTML, DOCX, and ODT use a bundled Pandoc engine; broader formats remain intentionally unsupported until separately validated. |
+| 2026-11-14 | **Native arm64 macOS packaging is the local release path** | The current Apple Silicon machine can build and package the complete arm64 resource bundle. Universal packaging is retained as `build:mac:universal` but requires a complete separately prepared darwin-x64 bundle. |
 
 ---
 
@@ -104,7 +107,7 @@ npm run build        # bundle main/preload/renderer to ./out
 ### Packaging
 ```bash
 npm run build:mac    # → dist/*-arm64.dmg on Apple Silicon
-npm run build:mac:universal # → dist/*-universal.dmg when x64 resources are available
+npm run build:mac:universal # → dist/*-universal.dmg only with complete x64 resources
 npm run build:win    # → dist/*.exe (NSIS installer + portable)
 ```
 
@@ -165,7 +168,7 @@ npm run build:win    # → dist/*.exe (NSIS installer + portable)
   binary into `resources/bin/<platform>-<arch>`, and electron-builder packages that directory
   outside ASAR. Native Apple Silicon packaging uses the complete arm64 resource bundle. Universal
   packaging additionally requires separately prepared x64 ImageMagick, Ghostscript, Pandoc, and
-  FFmpeg resources.
+  FFmpeg resources. Do not copy arm64 binaries into the x64 directory.
 - **Pandoc is a separate document engine:** its executable is resolved from the same external
   resource directory and invoked without a shell. macOS fetches it through Homebrew; Windows
   still needs a pinned official artifact and clean packaged-install validation.
@@ -211,10 +214,11 @@ npm run build:win    # → dist/*.exe (NSIS installer + portable)
 > BMP conversions fail with `ENGINE_MISSING` — a setup error, not an app bug. The three
 > `magickEngine` integration tests require the bundled ImageMagick binary. PDF rasterization also
 > requires Ghostscript, which the macOS fetch script installs and bundles beside ImageMagick;
-> the launcher adds its `bin` directory to `PATH`. Universal macOS packaging stages both Sharp
-> and FFmpeg architecture binaries.
-> before electron-builder runs; ImageMagick is copied as an external resource because its
-> architecture-specific files must not be merged into the ASAR.
+> the launcher adds its `bin` directory to `PATH`. ImageMagick is copied as an external resource
+> because its
+> architecture-specific files must not be merged into the ASAR. On the current Apple Silicon
+> machine, use `npm run build:mac` for the verified native arm64 DMG. `npm run
+> build:mac:universal` intentionally stops until a genuine Intel resource bundle is supplied.
 
 ---
 
