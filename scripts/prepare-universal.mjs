@@ -1,5 +1,5 @@
 import { execFile } from 'node:child_process'
-import { chmod, copyFile, mkdir } from 'node:fs/promises'
+import { access, chmod, copyFile, mkdir } from 'node:fs/promises'
 import { promisify } from 'node:util'
 
 const execFileAsync = promisify(execFile)
@@ -31,3 +31,18 @@ const destinationDir = new URL('../resources/bin/darwin-x64/', import.meta.url)
 await mkdir(destinationDir, { recursive: true })
 await copyFile(source, new URL('ffmpeg', destinationDir))
 await chmod(new URL('ffmpeg', destinationDir), 0o755)
+
+const x64Resources = new URL('../resources/bin/darwin-x64/', import.meta.url)
+const requiredResources = ['magick', 'pandoc', 'ffmpeg']
+
+for (const resource of requiredResources) {
+  try {
+    await access(new URL(resource, x64Resources))
+  } catch {
+    throw new Error(
+      `Universal macOS packaging requires resources/bin/darwin-x64/${resource}. ` +
+        'Build the x64 ImageMagick, Ghostscript, Pandoc, and FFmpeg resources on an Intel macOS ' +
+        'runner (or provide the complete darwin-x64 bundle) before running npm run build:mac.'
+    )
+  }
+}
