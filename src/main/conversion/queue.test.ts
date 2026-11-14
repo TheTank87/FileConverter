@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto'
 import { existsSync } from 'node:fs'
 import { mkdtemp, readdir, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
@@ -32,8 +33,8 @@ function sample(path: string, format: FormatId | null = 'png'): FileInfo {
 function job(
   path: string,
   to: FormatId = 'jpg'
-): { input: FileInfo; to: FormatId; options: ConvertOptions } {
-  return { input: sample(path), to, options: {} }
+): { id: string; input: FileInfo; to: FormatId; options: ConvertOptions } {
+  return { id: randomUUID(), input: sample(path), to, options: {} }
 }
 
 function resultFor(input: {
@@ -201,7 +202,7 @@ describe('conversion queue', () => {
 
     const queue = createConversionQueue({ engines: [engine], exists: () => false })
     const { batchId } = queue.start({
-      jobs: [{ input: sample(join(dir, 'photo.png')), to: 'jpg', options: {} }],
+      jobs: [{ id: randomUUID(), input: sample(join(dir, 'photo.png')), to: 'jpg', options: {} }],
       outputDir: null
     })
 

@@ -61,10 +61,15 @@ export function parseConvertRequest(value: unknown): ConvertRequest {
     outputDir = parsePath(value.outputDir, 'outputDir')
   }
 
-  return {
-    jobs: value.jobs.map((job, index) => parseJob(job, index)),
-    outputDir
-  }
+  const seen = new Set<string>()
+  const jobs = value.jobs.map((job, index) => {
+    const parsed = parseJob(job, index)
+    if (seen.has(parsed.id)) fail(`jobs[${index}].id must be unique within a batch.`)
+    seen.add(parsed.id)
+    return parsed
+  })
+
+  return { jobs, outputDir }
 }
 
 function parseJob(value: unknown, index: number): ConvertRequest['jobs'][number] {
@@ -72,10 +77,18 @@ function parseJob(value: unknown, index: number): ConvertRequest['jobs'][number]
   if (!isFormatId(value.to)) fail(`jobs[${index}].to must be a supported format.`)
 
   return {
+    id: parseJobId(value.id, index),
     input: parseFileInfo(value.input, index),
     to: value.to,
     options: parseOptions(value.options, index)
   }
+}
+
+function parseJobId(value: unknown, index: number): string {
+  if (typeof value !== 'string' || !UUID_PATTERN.test(value)) {
+    fail(`jobs[${index}].id must be a valid job identifier.`)
+  }
+  return value
 }
 
 function parseFileInfo(value: unknown, index: number): FileInfo {

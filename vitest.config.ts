@@ -10,7 +10,7 @@ export default defineConfig({
   },
   test: {
     environment: 'node',
-    include: ['shared/**/*.test.ts', 'src/main/**/*.test.ts'],
+    include: ['shared/**/*.test.ts', 'src/main/**/*.test.ts', 'src/renderer/**/*.test.ts'],
     passWithNoTests: true
   }
 })

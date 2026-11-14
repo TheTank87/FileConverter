@@ -359,19 +359,26 @@ One Zustand store, split into slices so future widgets can subscribe narrowly:
 
 ```ts
 interface AppState {
-  files: Job[]                 // pending jobs in drop order
+  files: Job[]                 // queued, running, and finished jobs in drop order
   targetFormat: FormatId       // global picker; per-row override lives on the job
   outputDir: string | null     // null = source folder per job
   formats: FormatDef[]
   settings: Settings
   batchId: string | null
-  progress: Record<string, ProgressEvent>
+  progress: Record<string, ProgressEvent>   // keyed by renderer-assigned job id
+  load(): Promise<void>
   addFiles(files: FileInfo[]): void
+  pickAndAdd(): Promise<void>
+  addPaths(paths: string[]): Promise<void>
   removeFile(jobId: string): void
+  setFileFormat(jobId: string, to: FormatId): void
   setTargetFormat(f: FormatId): void
-  setOutputDir(dir: string | null): void
+  setOutputDir(dir: string | null): Promise<void>
+  setTheme(theme: ThemeMode): Promise<void>
   start(): Promise<void>
   cancel(): Promise<void>
+  handleProgress(event: ProgressEvent): void
+  handleJobDone(event: JobDoneEvent): void
 }
 ```
 
@@ -437,7 +444,8 @@ the-diat-converter/
       └─ src/
          ├─ main.tsx
          ├─ App.tsx
-         ├─ state/store.ts
+         ├─ state/store.ts + store.test.ts
+         ├─ lib/format.ts
          ├─ components/{DropZone,FileList,FileRow,FormatPicker,ProgressBar,ThemeToggle,SettingsPanel}.tsx
          └─ styles/{tokens.css,global.css}
 ```

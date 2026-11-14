@@ -18,13 +18,13 @@ the user's machine. Nothing is uploaded. The flagship example is **HEIC → PNG*
 
 See [`architecture.md`](./architecture.md) for the full technical design.
 
-**Current status:** Phase 6 (IPC & preload) complete and verified — every channel is wired, invoke
-results are typed `IpcResult<T>`, renderer payloads are validated, and progress/job events flow to
-the renderer with unsubscribe functions. The full check suite passes (50 passed, 3 ImageMagick
-integration tests skipped when the bundled binary is absent), and a CDP smoke run confirmed
-`window.api.getFormats()` returns all 8 formats from the built app. The build sequence lives in
-[`todos.md`](./todos.md); work top to bottom and check items off as they land.
-Next up: Phase 7 (renderer shell).
+**Current status:** Phase 7 (renderer shell) complete and verified — the Zustand store, themed CSS
+shell, drop/browse ingestion, per-row overrides, progress, cancel, and output actions are wired to
+`window.api`. The full check suite passes (61 passed, 3 ImageMagick integration tests skipped when
+the bundled binary is absent), including renderer store tests with a stubbed API. CDP smoke runs
+converted a real dropped PNG and a 50-file batch (all succeeded, no console errors, list scrolls
+internally). The build sequence lives in [`todos.md`](./todos.md); work top to bottom and check
+items off as they land. Next up: Phase 8 (settings, theme & polish).
 
 **Test fixtures:** `samples/` (git-ignored) holds HEIC, AVIF, transparent PNG, JPG, static +
 animated WebP, 20-frame GIF, TIFF, BMP, a corrupt JPG, and an 8000×6250 (50 MP) JPG. They were

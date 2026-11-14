@@ -50,7 +50,7 @@ export interface Job {
 }
 
 export interface ConvertRequest {
-  jobs: Array<Pick<Job, 'input' | 'to' | 'options'>>
+  jobs: Array<Pick<Job, 'id' | 'input' | 'to' | 'options'>>
   outputDir: string | null
 }
 

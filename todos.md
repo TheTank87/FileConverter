@@ -165,29 +165,37 @@ typed `WindowApi`. A CDP smoke run of the built app clicked the temporary "Log f
 
 ## Phase 7 — Renderer shell
 
-- [ ] `styles/tokens.css`: color/space/radius/typography tokens for light + dark; map to
+- [x] `styles/tokens.css`: color/space/radius/typography tokens for light + dark; map to
       `prefers-color-scheme` under `[data-theme="system"]`.
-- [ ] `styles/global.css`: reset, base type, focus-visible ring, reduced-motion rules.
-- [ ] `App.tsx`: CSS-grid shell with named regions (`topbar`, `hero`, `controls`, `list`,
+- [x] `styles/global.css`: reset, base type, focus-visible ring, reduced-motion rules.
+- [x] `App.tsx`: CSS-grid shell with named regions (`topbar`, `hero`, `controls`, `list`,
       `actions`, `footer`) and deliberately empty widget slots.
-- [ ] `state/store.ts`: Zustand store per §6.1 (files, formats, target, output, progress,
+- [x] `state/store.ts`: Zustand store per §6.1 (files, formats, target, output, progress,
       batchId, selectors).
-- [ ] Load `getFormats()` + `getSettings()` on mount; show a graceful error state if either fails.
-- [ ] `components/DropZone.tsx`: drag & drop **and** click-to-browse; keyboard activation;
+- [x] Load `getFormats()` + `getSettings()` on mount; show a graceful error state if either fails.
+- [x] `components/DropZone.tsx`: drag & drop **and** click-to-browse; keyboard activation;
       dragover affordance.
-- [ ] `components/FileList.tsx` + `FileRow.tsx`: thumb/name/size/format arrow, per-row override,
+- [x] `components/FileList.tsx` + `FileRow.tsx`: thumb/name/size/format arrow, per-row override,
       remove button, status/error display.
-- [ ] `components/FormatPicker.tsx`: driven by the matrix, disabled formats marked with a reason.
-- [ ] `components/ProgressBar.tsx`: per-row + aggregate, `role="progressbar"`.
-- [ ] `components/ThemeToggle.tsx`: system/light/dark, persisted via `setSettings`.
-- [ ] `components/SettingsPanel.tsx`: output folder (default "Same folder"), clear setting.
-- [ ] Primary action: "Convert N files", disabled when nothing is convertible; switches to
+- [x] `components/FormatPicker.tsx`: driven by the matrix, disabled formats marked with a reason.
+- [x] `components/ProgressBar.tsx`: per-row + aggregate, `role="progressbar"`.
+- [x] `components/ThemeToggle.tsx`: system/light/dark, persisted via `setSettings`.
+- [x] `components/SettingsPanel.tsx`: output folder (default "Same folder"), clear setting.
+- [x] Primary action: "Convert N files", disabled when nothing is convertible; switches to
       Cancel while a batch runs.
-- [ ] Post-conversion row actions: Save/Reveal (open path) and Copy path.
-- [ ] Empty state and large-batch layout check at 50 rows (virtualize only if needed).
+- [x] Post-conversion row actions: Save/Reveal (open path) and Copy path.
+- [x] Empty state and large-batch layout check at 50 rows (virtualize only if needed).
 
 **Done when:** drop + browse both populate rows and the whole flow completes against mocked
 `window.api`.
+**Verified:** full check suite passes (61 passed, 3 ImageMagick tests skipped). Renderer store tests
+run under Vitest with a stubbed `window.api` and cover load/error handling, browse + dropped-path
+ingestion with dedupe, global and per-row targets, the start → progress → job-done flow, cancel,
+late progress after completion, and unsupported/unwritable selections. A CDP smoke run dropped a
+real PNG into the built app, converted it to `input-1.png`, and exposed Save/Reveal/Copy path with
+no console errors. A second run dropped 50 files: the list scrolled internally (5042 px content in
+a 252 px region) with no horizontal overflow, and all 50 converted successfully with collision
+suffixes and no failed jobs.
 
 ---
 

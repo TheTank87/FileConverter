@@ -214,7 +214,7 @@ export function createConversionQueue(options: ConversionQueueOptions): Conversi
     start(request: ConvertRequest): { batchId: string } {
       const batchId = randomUUID()
       const jobs: InternalJob[] = request.jobs.map((job) => ({
-        id: randomUUID(),
+        id: job.id,
         input: { ...job.input },
         to: job.to,
         options: { ...job.options },

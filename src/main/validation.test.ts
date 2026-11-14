@@ -54,15 +54,25 @@ describe('parseBatchId', () => {
   })
 })
 
+function requestJob(overrides = {}) {
+  return {
+    id: randomUUID(),
+    input: { path: '/tmp/a.png' },
+    to: 'jpg',
+    options: {},
+    ...overrides
+  }
+}
+
 describe('parseConvertRequest', () => {
   it('re-derives file metadata from the path', () => {
     const request = parseConvertRequest({
       jobs: [
-        {
+        requestJob({
           input: { path: '/tmp/photo.HEIC', name: 'spoofed.exe', size: -5, format: 'gif' },
           to: 'png',
           options: { quality: 500, keepMetadata: true }
-        }
+        })
       ],
       outputDir: null
     })
@@ -78,7 +88,7 @@ describe('parseConvertRequest', () => {
 
   it('accepts an absolute output directory', () => {
     const request = parseConvertRequest({
-      jobs: [{ input: { path: '/tmp/a.png' }, to: 'jpg', options: {} }],
+      jobs: [requestJob()],
       outputDir: '/tmp/out'
     })
 
@@ -90,11 +100,7 @@ describe('parseConvertRequest', () => {
       'INVALID_REQUEST'
     )
 
-    const jobs = Array.from({ length: MAX_BATCH_FILES + 1 }, () => ({
-      input: { path: '/tmp/a.png' },
-      to: 'jpg',
-      options: {}
-    }))
+    const jobs = Array.from({ length: MAX_BATCH_FILES + 1 }, () => requestJob())
     expect(thrown(() => parseConvertRequest({ jobs, outputDir: null })).code).toBe(
       'INVALID_REQUEST'
     )
@@ -102,7 +108,7 @@ describe('parseConvertRequest', () => {
     expect(
       thrown(() =>
         parseConvertRequest({
-          jobs: [{ input: { path: '/tmp/a.png' }, to: 'nope', options: {} }],
+          jobs: [requestJob({ to: 'nope' })],
           outputDir: null
         })
       ).code
@@ -111,10 +117,29 @@ describe('parseConvertRequest', () => {
     expect(
       thrown(() =>
         parseConvertRequest({
-          jobs: [{ input: { path: 'relative.png' }, to: 'jpg', options: {} }],
+          jobs: [requestJob({ input: { path: 'relative.png' } })],
           outputDir: null
         })
       ).code
+    ).toBe('INVALID_REQUEST')
+  })
+
+  it('rejects duplicate job ids', () => {
+    const duplicate = requestJob()
+    expect(
+      thrown(() => parseConvertRequest({ jobs: [duplicate, duplicate], outputDir: null })).code
+    ).toBe('INVALID_REQUEST')
+  })
+
+  it('rejects missing or malformed job ids', () => {
+    expect(
+      thrown(() => parseConvertRequest({ jobs: [requestJob({ id: undefined })], outputDir: null }))
+        .code
+    ).toBe('INVALID_REQUEST')
+
+    expect(
+      thrown(() => parseConvertRequest({ jobs: [requestJob({ id: 'job-1' })], outputDir: null }))
+        .code
     ).toBe('INVALID_REQUEST')
   })
 
@@ -122,7 +147,7 @@ describe('parseConvertRequest', () => {
     expect(
       thrown(() =>
         parseConvertRequest({
-          jobs: [{ input: { path: '/tmp/a.png' }, to: 'jpg', options: { quality: 'high' } }],
+          jobs: [requestJob({ options: { quality: 'high' } })],
           outputDir: null
         })
       ).code
@@ -131,7 +156,7 @@ describe('parseConvertRequest', () => {
     expect(
       thrown(() =>
         parseConvertRequest({
-          jobs: [{ input: { path: '/tmp/a.png' }, to: 'jpg', options: { keepMetadata: 'yes' } }],
+          jobs: [requestJob({ options: { keepMetadata: 'yes' } })],
           outputDir: null
         })
       ).code
