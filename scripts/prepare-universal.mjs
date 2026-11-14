@@ -4,6 +4,22 @@ import { promisify } from 'node:util'
 
 const execFileAsync = promisify(execFile)
 
+if (process.env.MAC_X64_RESOURCES_DIR) {
+  await execFileAsync(
+    process.platform === 'win32' ? 'npm.cmd' : 'npm',
+    ['run', 'stage:mac:x64', '--', process.env.MAC_X64_RESOURCES_DIR],
+    { stdio: 'inherit' }
+  )
+} else {
+  await execFileAsync(
+    process.execPath,
+    ['scripts/fetch-binaries.mjs', '--platform=darwin', '--arch=x64'],
+    {
+      stdio: 'inherit'
+    }
+  )
+}
+
 await execFileAsync(
   process.platform === 'win32' ? 'npm.cmd' : 'npm',
   [
@@ -24,12 +40,6 @@ await execFileAsync(
     stdio: 'inherit',
     env: { ...process.env, npm_config_arch: 'x64' }
   }
-)
-
-await execFileAsync(
-  process.platform === 'win32' ? 'npm.cmd' : 'npm',
-  ['run', 'fetch:binaries:universal'],
-  { stdio: 'inherit' }
 )
 
 const source = new URL('../node_modules/ffmpeg-static/ffmpeg', import.meta.url)

@@ -262,11 +262,10 @@ Windows) remains pending until Phase 10 provides bundled ImageMagick and install
 - [x] `binaries.ts` resolves correctly **inside the packaged app** (resources path, not
       asar `__dirname`); packaging now includes and unpacks `resources/bin/**`.
 - [ ] `npm run build:mac` → install the `.dmg`, run the QA matrix. Universal packaging now
-       requires a complete Intel resource bundle; `prepare-universal.mjs` uses Intel Homebrew
-       through Rosetta when `/usr/local/bin/brew` is available. On Apple Silicon, install
-       Rosetta and Intel Homebrew first:
-       `softwareupdate --install-rosetta --agree-to-license`, then run the Intel Homebrew
-       installer under `arch -x86_64`; rerun `npm run build:mac` afterward.
+       requires a complete Intel resource bundle. If Intel Homebrew is unavailable locally,
+       run the manually triggered `Prepare macOS x64 resources` workflow, download its
+       `macos-darwin-x64-resources` artifact, and run
+       `MAC_X64_RESOURCES_DIR=/path/to/darwin-x64 npm run build:mac`.
 - [ ] `npm run build:win` on Windows → install the `.exe`, run the QA matrix.
 - [x] Add third-party license notices for libvips/libheif/ImageMagick.
 

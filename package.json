@@ -17,6 +17,7 @@
     "test": "vitest run",
     "build:mac": "npm run build && node scripts/prepare-universal.mjs && electron-builder --mac --universal",
     "fetch:binaries:universal": "node scripts/fetch-binaries.mjs --platform=darwin --arch=x64",
+    "stage:mac:x64": "node scripts/stage-mac-x64.mjs",
     "build:win": "npm run build && electron-builder --win",
     "postinstall": "electron-builder install-app-deps && node scripts/fetch-binaries.mjs"
   },
