@@ -30,28 +30,31 @@
 
 ---
 
-## Phase 1 — Scaffold
+## Phase 1 — Scaffold ✅
 
-- [ ] `npm init -y`, then add `"type": "module"` and a private package name.
-- [ ] Install runtime deps: `electron`, `react`, `react-dom`, `zustand`, `sharp`.
-- [ ] Install dev deps: `electron-vite`, `vite`, `typescript`, `@types/node`,
+- [x] `npm init -y`, then add `"type": "module"` and a private package name.
+- [x] Install runtime deps: `electron`, `react`, `react-dom`, `zustand`, `sharp`.
+- [x] Install dev deps: `electron-vite`, `vite`, `typescript`, `@types/node`,
       `@types/react`, `@types/react-dom`, `electron-builder`, `vitest`, `eslint`,
       `prettier`, plus the React/ESLint plugins used by the config.
-- [ ] Create `electron.vite.config.ts` with `main`, `preload`, `renderer` sections and the
+- [x] Create `electron.vite.config.ts` with `main`, `preload`, `renderer` sections and the
       `@shared` / `@renderer` aliases.
-- [ ] Create `tsconfig.json`, `tsconfig.node.json`, `tsconfig.web.json` (strict, `noUncheckedIndexedAccess`,
+- [x] Create `tsconfig.json`, `tsconfig.node.json`, `tsconfig.web.json` (strict, `noUncheckedIndexedAccess`,
       `verbatimModuleSyntax`; no `any`).
-- [ ] Create `vitest.config.ts` (node environment, `shared` + `main` test globs).
-- [ ] Add scripts: `dev`, `build`, `typecheck`, `lint`, `format`, `test`, `build:mac`,
+- [x] Create `vitest.config.ts` (node environment, `shared` + `main` test globs).
+- [x] Add scripts: `dev`, `build`, `typecheck`, `lint`, `format`, `test`, `build:mac`,
       `build:win`, `postinstall`.
-- [ ] Add `.gitignore` (`node_modules`, `out`, `dist`, `resources/bin`, `samples`, `*.log`).
-- [ ] Add `.editorconfig` + Prettier config + ESLint flat config.
-- [ ] Create the directory skeleton from `architecture.md` §7.
-- [ ] Add minimal `src/main/index.ts`, `src/preload/index.ts`, `src/renderer/src/main.tsx`,
+- [x] Add `.gitignore` (`node_modules`, `out`, `dist`, `resources/bin`, `samples`, `*.log`).
+- [x] Add `.editorconfig` + Prettier config + ESLint flat config.
+- [x] Create the directory skeleton from `architecture.md` §7.
+- [x] Add minimal `src/main/index.ts`, `src/preload/index.ts`, `src/renderer/src/main.tsx`,
       `src/renderer/index.html` that boot a blank window.
-- [ ] `npm run dev` opens a window with no console errors.
+- [x] `npm run dev` opens a window with no console errors.
 
 **Done when:** blank Electron window launches via `electron-vite dev`; typecheck passes.
+**Verified:** `npm run typecheck`, `npm run lint`, `npm test`, `npm run build` pass; `npm run dev` and
+`npm start` both open "The Diat Converter" with no runtime errors (only Electron's expected dev CSP
+warning, addressed in Phase 3/8).
 
 ---
 

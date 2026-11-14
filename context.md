@@ -18,9 +18,10 @@ the user's machine. Nothing is uploaded. The flagship example is **HEIC → PNG*
 
 See [`architecture.md`](./architecture.md) for the full technical design.
 
-**Current status:** Phase 0 (prep) complete — local test fixtures exist, naming decided, no
-scaffold or source code yet. The build sequence lives in [`todos.md`](./todos.md); work top to
-bottom and check items off as they land. Next up: Phase 1 (scaffold).
+**Current status:** Phase 1 (scaffold) complete — the electron-vite + React + TypeScript project
+boots a blank window in both dev and preview, and the full check suite passes. The build sequence
+lives in [`todos.md`](./todos.md); work top to bottom and check items off as they land. Next up:
+Phase 2 (shared contracts).
 
 **Test fixtures:** `samples/` (git-ignored) holds HEIC, AVIF, transparent PNG, JPG, static +
 animated WebP, 20-frame GIF, TIFF, BMP, a corrupt JPG, and an 8000×6250 (50 MP) JPG. They were
@@ -46,6 +47,7 @@ Never commit them — they exist only to drive manual and engine tests.
 | 2026-11-13 | **Settings at `userData/settings.json`**, validated + atomic | User-readable, trivially migratable, no native store dependency. |
 | 2026-11-13 | **No output ever overwrites the source** (same-path forces a suffix) | Data safety beats convenience; matches the local-first promise. |
 | 2026-11-13 | **Product name `The Diat Converter`, appId `com.diat.converter`** | Fixed string used in window title, installers, and `electron-builder.yml`. |
+| 2026-11-13 | **ESM main process, CJS preload** (`out/preload/index.cjs`) | `"type": "module"` suits electron-vite 6; a sandboxed renderer requires a CommonJS preload. |
 
 ---
 
@@ -124,6 +126,10 @@ npm run build:win    # → dist/*.exe (NSIS installer + portable)
   conversions must resolve to `magickEngine`. Do not advertise BMP as sharp-capable.
 - **`FileInfo.format` can be `null`:** unknown extensions must fail per-row, not throw out of
   `statFiles`.
+- **Electron binary must be fetched once:** Electron 45 has no postinstall downloader. If dev
+  fails with `Electron uninstall`, run `node node_modules/electron/install.js`.
+- **Keep a global `BrowserWindow` reference:** without one, V8 may collect the window and the app
+  quits unexpectedly a few seconds after launch.
 
 ---
 
@@ -148,9 +154,9 @@ npm run build:win    # → dist/*.exe (NSIS installer + portable)
 
 | Tool | Version used | Notes |
 |------|--------------|-------|
-| Node | 24.16.0 (LTS) ✅ | Electron's bundled Node is what runs at runtime; this is build-time only. |
-| npm | 11.13.0 ✅ | Lockfile committed; use `npm ci` in CI. |
-| OS | macOS 12+ / Windows 10 21H2+ | Dev machine is macOS (darwin). Windows ARM64 out of scope for v1. |
+| Node | 24.14.0 (LTS) ✅ | Electron's bundled Node is what runs at runtime; this is build-time only. |
+| npm | 11.9.0 ✅ | Lockfile committed; use `npm ci` in CI. |
+| OS | macOS 12+ / Windows 10 21H2+ | Current dev machine is Windows (win32). Windows ARM64 out of scope for v1. |
 | Fixtures | `sips` + `ffmpeg` (dev only) | Not app dependencies; used once to generate `samples/`. |
 
 > `postinstall` runs `electron-builder install-app-deps` (sharp ABI match) and
