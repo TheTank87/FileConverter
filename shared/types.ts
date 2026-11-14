@@ -52,6 +52,22 @@ export interface Job {
   error?: ConvertError
 }
 
+export interface ConversionPreset {
+  id: string
+  name: string
+  to: FormatId
+  options: ConvertOptions
+}
+
+export interface RecentConversion {
+  id: string
+  inputName: string
+  inputPath: string
+  outputPath: string
+  to: FormatId
+  completedAt: string
+}
+
 export interface ConvertRequest {
   jobs: Array<Pick<Job, 'id' | 'input' | 'to' | 'options'>>
   outputDir: string | null

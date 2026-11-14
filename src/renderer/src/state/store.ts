@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import type {
   ConvertError,
+  ConversionPreset,
   ConvertRequest,
   FileInfo,
   FormatDef,
@@ -10,6 +11,7 @@ import type {
   JobStatus,
   ConvertOptions,
   ProgressEvent,
+  RecentConversion,
   Settings,
   ThemeMode
 } from '@shared/types'
@@ -32,6 +34,8 @@ export interface AppState {
   loadError: ConvertError | null
   error: ConvertError | null
   liveMessage: string
+  recentConversions: RecentConversion[]
+  presets: ConversionPreset[]
   load(): Promise<void>
   addFiles(files: FileInfo[]): void
   pickAndAdd(): Promise<void>
@@ -39,6 +43,12 @@ export interface AppState {
   removeFile(jobId: string): void
   setFileFormat(jobId: string, to: FormatId): void
   setFileOptions(jobId: string, options: Partial<ConvertOptions>): void
+  moveFile(jobId: string, direction: 'up' | 'down'): void
+  savePreset(name: string, to: FormatId, options: ConvertOptions): void
+  deletePreset(id: string): void
+  applyPreset(id: string): void
+  openRecent(id: string): Promise<void>
+  revealRecent(id: string): Promise<void>
   setTargetFormat(format: FormatId): void
   setOutputDir(dir: string | null): Promise<void>
   setTheme(theme: ThemeMode): Promise<void>
@@ -92,6 +102,9 @@ function createJob(file: FileInfo, to: FormatId): Job {
 }
 
 const THEME_STORAGE_KEY = 'diat.theme'
+const RECENTS_STORAGE_KEY = 'diat.recents'
+const PRESETS_STORAGE_KEY = 'diat.presets'
+const MAX_RECENTS = 20
 
 function applyTheme(theme: ThemeMode): void {
   if (typeof document !== 'undefined') document.documentElement.dataset.theme = theme
@@ -108,6 +121,23 @@ export function unknownError(message: string): ConvertError {
   return { code: 'UNKNOWN', message }
 }
 
+function readStored<T>(key: string, fallback: T): T {
+  try {
+    const raw = localStorage.getItem(key)
+    return raw === null ? fallback : (JSON.parse(raw) as T)
+  } catch {
+    return fallback
+  }
+}
+
+function writeStored(key: string, value: unknown): void {
+  try {
+    localStorage.setItem(key, JSON.stringify(value))
+  } catch {
+    // Local storage is an enhancement; conversion remains usable if it is unavailable.
+  }
+}
+
 export const useAppStore = create<AppState>((set, get) => ({
   files: [],
   targetFormat: DEFAULT_SETTINGS.defaultFormat,
@@ -120,6 +150,8 @@ export const useAppStore = create<AppState>((set, get) => ({
   loadError: null,
   error: null,
   liveMessage: '',
+  recentConversions: readStored<RecentConversion[]>(RECENTS_STORAGE_KEY, []),
+  presets: readStored<ConversionPreset[]>(PRESETS_STORAGE_KEY, []),
 
   async load() {
     if (get().loading) return
@@ -216,6 +248,73 @@ export const useAppStore = create<AppState>((set, get) => ({
           : job
       )
     }))
+  },
+
+  moveFile(jobId, direction) {
+    set((state) => {
+      const index = state.files.findIndex((job) => job.id === jobId)
+      if (index < 0) return {}
+      const target = direction === 'up' ? index - 1 : index + 1
+      if (target < 0 || target >= state.files.length) return {}
+      const files = [...state.files]
+      const current = files[index]
+      const adjacent = files[target]
+      if (current === undefined || adjacent === undefined) return {}
+      files[index] = adjacent
+      files[target] = current
+      return { files }
+    })
+  },
+
+  savePreset(name, to, options) {
+    const trimmed = name.trim()
+    if (trimmed === '') return
+    const preset: ConversionPreset = {
+      id: crypto.randomUUID(),
+      name: trimmed.slice(0, 60),
+      to,
+      options: { ...options }
+    }
+    set((state) => {
+      const presets = [...state.presets, preset]
+      writeStored(PRESETS_STORAGE_KEY, presets)
+      return { presets }
+    })
+  },
+
+  deletePreset(id) {
+    set((state) => {
+      const presets = state.presets.filter((preset) => preset.id !== id)
+      writeStored(PRESETS_STORAGE_KEY, presets)
+      return { presets }
+    })
+  },
+
+  applyPreset(id) {
+    const preset = get().presets.find((candidate) => candidate.id === id)
+    if (!preset) return
+    set((state) => ({
+      targetFormat: preset.to,
+      files: state.files.map((job) =>
+        job.status === 'queued' && job.batchId === ''
+          ? { ...job, to: preset.to, options: { ...preset.options } }
+          : job
+      )
+    }))
+  },
+
+  async openRecent(id) {
+    const recent = get().recentConversions.find((item) => item.id === id)
+    if (!recent) return
+    const result = await window.api.openPath(recent.outputPath)
+    if (!result.ok) set({ error: result.error })
+  },
+
+  async revealRecent(id) {
+    const recent = get().recentConversions.find((item) => item.id === id)
+    if (!recent) return
+    const result = await window.api.revealInFolder(recent.outputPath)
+    if (!result.ok) set({ error: result.error })
   },
 
   setTargetFormat(format) {
@@ -384,9 +483,24 @@ export const useAppStore = create<AppState>((set, get) => ({
 
       if (!stillActive && state.batchId !== null) liveMessage += ' Batch complete.'
 
+      let recentConversions = state.recentConversions
+      if (!failed) {
+        const recent: RecentConversion = {
+          id: crypto.randomUUID(),
+          inputName: job.input.name,
+          inputPath: job.input.path,
+          outputPath: event.outputPath,
+          to: job.to,
+          completedAt: new Date().toISOString()
+        }
+        recentConversions = [recent, ...state.recentConversions].slice(0, MAX_RECENTS)
+        writeStored(RECENTS_STORAGE_KEY, recentConversions)
+      }
+
       return {
         files,
         progress,
+        recentConversions,
         batchId: stillActive ? state.batchId : null,
         liveMessage
       }

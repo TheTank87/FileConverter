@@ -58,6 +58,7 @@ Never commit them — they exist only to drive manual and engine tests.
 | 2026-11-13 | **Auto-orient always; strip EXIF/GPS by default** | `keepMetadata` defaults to false so GPS never leaks accidentally; ICC is kept when supported. Explicit `keepMetadata: true` keeps EXIF. |
 | 2026-11-14 | **Mirror the theme to localStorage for a pre-paint boot script** | The inline `index.html` script cannot read main-process `settings.json` before first paint; `settings.json` stays canonical and the mirror is rewritten whenever the theme is applied. |
 | 2026-11-14 | **Per-file image options** (quality, bounded resize, JPG background, metadata) | Advanced controls belong to each queued job so mixed-format batches can use different output settings without changing the global target. |
+| 2026-11-14 | **v1.2 widgets use renderer-local persistence** | Recent outputs and presets are lightweight local metadata; localStorage keeps them offline without expanding the main-process settings schema. |
 
 ---
 

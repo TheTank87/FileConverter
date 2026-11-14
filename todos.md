@@ -287,7 +287,7 @@ tooling present.
 ## Phase 12 — Post-v1 backlog (do not start before release)
 
 - [x] v1.1: per-file options (quality, resize, background color) in the UI + engine options.
-- [ ] v1.2: widgets (recent conversions, reorder, presets) in the reserved regions.
+- [x] v1.2: widgets (recent conversions, reorder, presets) in the reserved regions.
 - [ ] v2: FFmpeg engine for audio (MP3, WAV, FLAC, AAC, OGG).
 - [ ] v2.1: video (MP4, MOV, WEBM, MKV).
 - [ ] v3: documents (PDF ↔ images, Pandoc for text).

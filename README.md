@@ -19,6 +19,7 @@ can open anywhere.
 - **Cancel anytime** — no half-written or leftover temp files.
 - **Remembers** your theme (system/light/dark) and last output folder between launches.
 - After converting, **open the result** or reveal it in Finder/Explorer.
+- Reorder queued files, save reusable presets, and revisit recent conversions.
 
 ## Supported formats (v1: images)
 
@@ -58,6 +59,12 @@ Each queued file can override the defaults before conversion:
   enlarged.
 - **Background:** a `#RRGGBB` or `#RRGGBBAA` color used when flattening transparency to JPG.
 - **Keep metadata:** disabled by default so EXIF/GPS data is not retained accidentally.
+
+### Presets and recent conversions
+
+The Presets panel saves a target format and its per-file options locally for reuse. The Recent
+conversions panel keeps the latest completed outputs on this device and provides Open and Reveal
+actions. No file contents or conversion data leave the machine.
 
 ## Documentation
 

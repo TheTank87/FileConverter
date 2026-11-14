@@ -15,6 +15,8 @@ export function FileRow({ job, formats }: FileRowProps) {
   const removeFile = useAppStore((state) => state.removeFile)
   const setFileFormat = useAppStore((state) => state.setFileFormat)
   const setFileOptions = useAppStore((state) => state.setFileOptions)
+  const moveFile = useAppStore((state) => state.moveFile)
+  const files = useAppStore((state) => state.files)
   const setError = useAppStore((state) => state.setError)
   const batchId = useAppStore((state) => state.batchId)
   const progress = useAppStore((state) => state.progress[job.id])
@@ -158,6 +160,26 @@ export function FileRow({ job, formats }: FileRowProps) {
       >
         ×
       </button>
+      <div className="file-row__order">
+        <button
+          type="button"
+          className="icon-button"
+          aria-label={`Move ${job.input.name} up`}
+          disabled={locked || files[0]?.id === job.id}
+          onClick={() => moveFile(job.id, 'up')}
+        >
+          ↑
+        </button>
+        <button
+          type="button"
+          className="icon-button"
+          aria-label={`Move ${job.input.name} down`}
+          disabled={locked || files[files.length - 1]?.id === job.id}
+          onClick={() => moveFile(job.id, 'down')}
+        >
+          ↓
+        </button>
+      </div>
 
       <div className={`file-row__status file-row__status--${job.status}`}>
         <Status job={job} supported={supported} percent={percent} phase={progress?.phase} />

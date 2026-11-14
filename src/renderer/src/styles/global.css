@@ -66,13 +66,14 @@ button:disabled {
   padding: var(--space-4) clamp(var(--space-4), 4vw, var(--space-6));
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  grid-template-rows: auto auto auto minmax(0, 1fr) auto auto;
+  grid-template-rows: auto auto auto minmax(0, 1fr) auto auto auto;
   grid-template-areas:
     'topbar'
     'hero'
     'controls'
     'list'
     'actions'
+    'widgets'
     'footer';
   gap: var(--space-4);
 }
@@ -140,6 +141,73 @@ button:disabled {
   padding-top: var(--space-3);
   border-top: 1px dashed var(--border);
   color: var(--text-muted);
+  font-size: var(--text-xs);
+}
+
+.widgets {
+  grid-area: widgets;
+  display: flex;
+  gap: var(--space-3);
+}
+
+.widget {
+  flex: 1;
+  min-width: 0;
+  color: var(--text-muted);
+}
+
+.widget summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.widget__body {
+  margin-top: var(--space-2);
+  padding: var(--space-3);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+.preset-create {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.preset-create input {
+  min-width: 0;
+  flex: 1;
+  padding: var(--space-2);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
+.widget__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.widget__list li {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.widget__list li > span:first-child {
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.widget__empty {
+  margin: 0;
   font-size: var(--text-xs);
 }
 
@@ -406,11 +474,11 @@ button:disabled {
 
 .file-row {
   display: grid;
-  grid-template-columns: 44px minmax(0, 1fr) auto auto;
+  grid-template-columns: 44px minmax(0, 1fr) auto auto auto;
   grid-template-areas:
-    'thumb info picker remove'
-    'thumb options options options'
-    'thumb status status status';
+    'thumb info picker order remove'
+    'thumb options options options options'
+    'thumb status status status status';
   gap: var(--space-2) var(--space-3);
   align-items: center;
   padding: var(--space-3);
@@ -495,6 +563,12 @@ button:disabled {
 
 .file-row__remove {
   grid-area: remove;
+}
+
+.file-row__order {
+  display: flex;
+  grid-area: order;
+  gap: var(--space-1);
 }
 
 .file-row__status {
@@ -613,11 +687,12 @@ button:disabled {
   }
 
   .file-row {
-    grid-template-columns: 44px minmax(0, 1fr) auto;
+    grid-template-columns: 44px minmax(0, 1fr) auto auto;
     grid-template-areas:
-      'thumb info remove'
-      'thumb picker picker'
-      'status status status';
+      'thumb info order remove'
+      'thumb picker picker picker'
+      'thumb options options options'
+      'status status status status';
   }
 }
 

@@ -6,6 +6,7 @@ import { FormatPicker } from './components/FormatPicker'
 import { ProgressBar } from './components/ProgressBar'
 import { SettingsPanel } from './components/SettingsPanel'
 import { ThemeToggle } from './components/ThemeToggle'
+import { WidgetsPanel } from './components/WidgetsPanel'
 import { errorSentence } from './lib/errors'
 import { isConvertible, selectAggregateProgress, useAppStore } from './state/store'
 
@@ -89,6 +90,8 @@ export function App() {
       <section className="app__list" aria-label="Files">
         <FileList />
       </section>
+
+      <WidgetsPanel formats={formats} />
 
       <section className="app__actions" aria-label="Actions">
         {error !== null && (
