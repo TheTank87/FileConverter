@@ -31,6 +31,7 @@ const SHARP_WRITE = ['png', 'jpg', 'webp', 'avif', 'tiff', 'gif'] as const
 const MAGICK_READ = ['heic', 'png', 'jpg', 'webp', 'avif', 'tiff', 'gif', 'bmp', 'pdf'] as const
 const MAGICK_WRITE = ['png', 'jpg', 'webp', 'avif', 'tiff', 'gif', 'bmp', 'pdf'] as const
 const FFMPEG_FORMATS = ['mp3', 'wav', 'flac', 'aac', 'ogg', 'mp4', 'mov', 'webm', 'mkv'] as const
+const PANDOC_FORMATS = ['txt', 'md', 'html', 'docx', 'odt'] as const
 
 const LOSSY_DEFAULT: ConvertOptions = { quality: 80, keepMetadata: false }
 const LOSSLESS_DEFAULT: ConvertOptions = { keepMetadata: false }
@@ -179,6 +180,46 @@ const SEEDS: readonly FormatSeed[] = [
     mime: 'application/pdf',
     kind: 'document',
     defaultOptions: { keepMetadata: false }
+  },
+  {
+    id: 'txt',
+    label: 'Text',
+    extensions: ['txt'],
+    mime: 'text/plain',
+    kind: 'document',
+    defaultOptions: { keepMetadata: false }
+  },
+  {
+    id: 'md',
+    label: 'Markdown',
+    extensions: ['md', 'markdown'],
+    mime: 'text/markdown',
+    kind: 'document',
+    defaultOptions: { keepMetadata: false }
+  },
+  {
+    id: 'html',
+    label: 'HTML',
+    extensions: ['html', 'htm'],
+    mime: 'text/html',
+    kind: 'document',
+    defaultOptions: { keepMetadata: false }
+  },
+  {
+    id: 'docx',
+    label: 'DOCX',
+    extensions: ['docx'],
+    mime: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    kind: 'document',
+    defaultOptions: { keepMetadata: false }
+  },
+  {
+    id: 'odt',
+    label: 'ODT',
+    extensions: ['odt'],
+    mime: 'application/vnd.oasis.opendocument.text',
+    kind: 'document',
+    defaultOptions: { keepMetadata: false }
   }
 ]
 
@@ -196,6 +237,10 @@ export const FORMAT_MATRIX: Record<FormatId, FormatSpec> = Object.fromEntries(
       ffmpeg: {
         read: (FFMPEG_FORMATS as readonly string[]).includes(seed.id),
         write: (FFMPEG_FORMATS as readonly string[]).includes(seed.id)
+      },
+      pandoc: {
+        read: (PANDOC_FORMATS as readonly string[]).includes(seed.id),
+        write: (PANDOC_FORMATS as readonly string[]).includes(seed.id)
       }
     }
 
@@ -203,8 +248,13 @@ export const FORMAT_MATRIX: Record<FormatId, FormatSpec> = Object.fromEntries(
       seed.id,
       {
         ...seed,
-        canRead: engines.sharp.read || engines.magick.read || engines.ffmpeg.read,
-        canWrite: engines.sharp.write || engines.magick.write || engines.ffmpeg.write,
+        canRead:
+          engines.sharp.read || engines.magick.read || engines.ffmpeg.read || engines.pandoc.read,
+        canWrite:
+          engines.sharp.write ||
+          engines.magick.write ||
+          engines.ffmpeg.write ||
+          engines.pandoc.write,
         engines
       }
     ]
@@ -252,7 +302,8 @@ export function isSupported(from: FormatId, to: FormatId): boolean {
   return (
     engineCanConvert('sharp', from, to) ||
     engineCanConvert('magick', from, to) ||
-    engineCanConvert('ffmpeg', from, to)
+    engineCanConvert('ffmpeg', from, to) ||
+    engineCanConvert('pandoc', from, to)
   )
 }
 

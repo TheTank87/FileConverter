@@ -290,8 +290,8 @@ tooling present.
 - [x] v1.2: widgets (recent conversions, reorder, presets) in the reserved regions.
 - [x] v2: FFmpeg engine for audio (MP3, WAV, FLAC, AAC, OGG).
 - [x] v2.1: video (MP4, MOV, WEBM, MKV).
-- [ ] v3: documents.
+- [x] v3: documents.
   - [x] v3.1: PDF ↔ raster images through the bundled ImageMagick pipeline.
-  - [ ] v3.2: Pandoc-backed text/document conversion after platform binaries, licensing, and
-        clean-install packaging are verified.
+  - [x] v3.2: Pandoc-backed text/document conversion implemented and packaged for both Windows
+        and macOS.
 - [ ] Code signing + notarization for macOS and Windows.

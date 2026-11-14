@@ -38,6 +38,7 @@ const key = `${requestedPlatform}-${requestedArch}`
 const release = releases[key]
 
 await ensureFfmpeg(key)
+await ensurePandoc(key)
 
 if (requestedPlatform === 'darwin') {
   await fetchMacImageMagick(key, requestedArch)
@@ -127,6 +128,33 @@ async function ensureFfmpeg(targetKey) {
   await cp(source, destination)
   if (!targetKey.startsWith('win32-')) await chmod(destination, 0o755)
   console.log(`Bundled FFmpeg for ${targetKey} at ${destination}.`)
+}
+
+async function ensurePandoc(targetKey) {
+  const destinationDir = join(binaryRoot, targetKey)
+  const destination = join(destinationDir, targetKey.startsWith('win32-') ? 'pandoc.exe' : 'pandoc')
+
+  try {
+    await stat(destination)
+    console.log(`Pandoc already present at ${destination}; skipping.`)
+    return
+  } catch (error) {
+    if (error?.code !== 'ENOENT') throw error
+  }
+
+  if (!targetKey.startsWith('darwin-')) {
+    console.warn(`Pandoc is not bundled automatically for ${targetKey}; provide ${destination}.`)
+    return
+  }
+
+  await requireCommand('brew')
+  await execFileAsync('brew', ['install', 'pandoc'], { stdio: 'inherit' })
+  const prefix = (await execFileAsync('brew', ['--prefix', 'pandoc'])).stdout.trim()
+  const source = join(prefix, 'bin', 'pandoc')
+  await mkdir(destinationDir, { recursive: true })
+  await cp(source, destination)
+  await chmod(destination, 0o755)
+  console.log(`Bundled Pandoc for ${targetKey} at ${destination}.`)
 }
 
 async function sha256(path) {

@@ -21,7 +21,7 @@ describe('statFiles', () => {
   it('returns file info in first-seen order and skips duplicates', async () => {
     const dir = await tempDir()
     const image = join(dir, 'photo.HEIC')
-    const notes = join(dir, 'notes.txt')
+    const notes = join(dir, 'notes.unknown')
     const folder = join(dir, 'folder')
 
     await writeFile(image, 'image bytes')
@@ -30,7 +30,7 @@ describe('statFiles', () => {
 
     await expect(statFiles([image, folder, notes, image])).resolves.toEqual([
       { path: image, name: 'photo.HEIC', size: 11, format: 'heic' },
-      { path: notes, name: 'notes.txt', size: 5, format: null }
+      { path: notes, name: 'notes.unknown', size: 5, format: null }
     ])
   })
 

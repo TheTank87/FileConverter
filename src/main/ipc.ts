@@ -12,6 +12,7 @@ import { FORMAT_LIST, getFormats } from './conversion/formats'
 import { magickEngine } from './conversion/magickEngine'
 import { sharpEngine } from './conversion/sharpEngine'
 import { ffmpegEngine } from './conversion/ffmpegEngine'
+import { pandocEngine } from './conversion/pandocEngine'
 import { statFiles } from './files'
 import { sanitizeSettingsPatch, type SettingsStore } from './settings'
 import { parseBatchId, parseConvertRequest, parsePath, parsePathList } from './validation'
@@ -25,9 +26,19 @@ const MEDIA_EXTENSIONS = [
     )
   )
 ]
+const DOCUMENT_EXTENSIONS = [
+  ...new Set(
+    FORMAT_LIST.filter((format) => format.kind === 'document').flatMap(
+      (format) => format.extensions
+    )
+  )
+]
 
 const FILE_FILTERS: FileFilter[] = [
-  { name: 'Images, audio, and video', extensions: [...IMAGE_EXTENSIONS, ...MEDIA_EXTENSIONS] },
+  {
+    name: 'Images, audio, video, and documents',
+    extensions: [...IMAGE_EXTENSIONS, ...MEDIA_EXTENSIONS, ...DOCUMENT_EXTENSIONS]
+  },
   { name: 'All Files', extensions: ['*'] }
 ]
 
@@ -46,7 +57,7 @@ export async function ok<T>(work: () => T | Promise<T>): Promise<IpcResult<T>> {
 export function registerIpc(deps: IpcDependencies): void {
   const registered = new Set<IpcChannel>()
   const queue = createConversionQueue({
-    engines: [sharpEngine, magickEngine, ffmpegEngine],
+    engines: [sharpEngine, magickEngine, ffmpegEngine, pandocEngine],
     onProgress: (event) => broadcast(IPC_CHANNELS.progress, event),
     onJobDone: (event) => broadcast(IPC_CHANNELS.jobDone, event)
   })

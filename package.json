@@ -2,7 +2,7 @@
   "name": "the-diat-converter",
   "version": "0.1.0",
   "private": true,
-  "description": "A local, offline file converter for Windows and macOS.",
+  "description": "The best solution to file conversion without the constraints of the internet.",
   "type": "module",
   "main": "./out/main/index.js",
   "scripts": {

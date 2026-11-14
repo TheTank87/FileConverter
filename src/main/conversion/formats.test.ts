@@ -23,6 +23,7 @@ describe('detectFormat', () => {
     expect(detectFormat('recording.MP3')).toBe('mp3')
     expect(detectFormat('voice.oga')).toBe('ogg')
     expect(detectFormat('document.PDF')).toBe('pdf')
+    expect(detectFormat('notes.MARKDOWN')).toBe('md')
   })
 
   it('returns null for missing or unknown extensions', () => {
@@ -119,6 +120,13 @@ describe('format matrix', () => {
     expect(engineCanConvert('magick', 'pdf', 'jpg')).toBe(true)
     expect(engineCanConvert('ffmpeg', 'pdf', 'png')).toBe(false)
     expect(isSupported('pdf', 'tiff')).toBe(true)
+  })
+
+  it('routes text document conversions through Pandoc', () => {
+    expect(engineCanConvert('pandoc', 'md', 'docx')).toBe(true)
+    expect(engineCanConvert('pandoc', 'docx', 'odt')).toBe(true)
+    expect(engineCanConvert('magick', 'md', 'docx')).toBe(false)
+    expect(isSupported('txt', 'html')).toBe(true)
   })
 
   it('treats unknown format ids as unsupported', () => {

@@ -19,7 +19,12 @@ export const FORMAT_IDS = [
   'mov',
   'webm',
   'mkv',
-  'pdf'
+  'pdf',
+  'txt',
+  'md',
+  'html',
+  'docx',
+  'odt'
 ] as const
 
 export type FormatId = (typeof FORMAT_IDS)[number]
@@ -30,7 +35,7 @@ export const THEME_MODES = ['system', 'light', 'dark'] as const
 
 export type ThemeMode = (typeof THEME_MODES)[number]
 
-export type EngineId = 'sharp' | 'magick' | 'ffmpeg'
+export type EngineId = 'sharp' | 'magick' | 'ffmpeg' | 'pandoc'
 
 export interface ConvertOptions {
   quality?: number

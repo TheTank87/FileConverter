@@ -23,6 +23,7 @@ can open anywhere.
 - Convert audio between MP3, WAV, FLAC, AAC, and OGG using the bundled FFmpeg engine.
 - Convert video between MP4, MOV, WEBM, and MKV using the same offline FFmpeg pipeline.
 - Convert PDF files to PNG, JPG, or TIFF, and raster images to PDF using bundled ImageMagick.
+- Convert TXT, Markdown, HTML, DOCX, and ODT through the bundled Pandoc engine.
 
 ## Supported formats (v1: images)
 
@@ -78,6 +79,12 @@ removed by default; the per-file **Keep metadata** option is available for audio
 PDF conversion supports PDF ↔ PNG, JPG, and TIFF through the bundled ImageMagick engine. PDF
 inputs are rasterized at 150 DPI. Conversion remains local and uses the same queue, cancellation,
 collision-safe naming, and atomic output behavior as the other formats.
+
+### Text and document conversion
+
+Pandoc conversion supports TXT, Markdown, HTML, DOCX, and ODT. The bundled Pandoc executable
+keeps these conversions offline and uses the same queue, cancellation, collision-safe naming,
+and atomic output behavior as the other formats.
 
 ## Documentation
 

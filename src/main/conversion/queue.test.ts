@@ -274,7 +274,7 @@ describe('conversion queue', () => {
     })
 
     const { batchId } = queue.start({
-      jobs: [{ ...job('/in/notes.txt'), input: sample('/in/notes.txt', null) }],
+      jobs: [{ ...job('/in/notes.unknown'), input: sample('/in/notes.unknown', null) }],
       outputDir: null
     })
 

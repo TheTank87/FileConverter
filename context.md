@@ -24,9 +24,9 @@ ImageMagick plus MP3/WAV/FLAC/AAC/OGG audio and MP4/MOV/WEBM/MKV video conversio
 FFmpeg engine, plus PDF ↔ raster-image conversion through ImageMagick. The validation
 suite has 115 passing tests, and typecheck, lint, test, and production build all pass. Universal
 macOS packaging support is in place; installed-app QA and the Windows installer matrix remain
-environment-dependent follow-up work. v3.1 PDF ↔ raster-image conversion is complete; Pandoc-backed
-text conversion is intentionally deferred to v3.2 until its bundled runtime is verified. The
-authoritative checklist is [`todos.md`](./todos.md).
+environment-dependent follow-up work. v3.1 PDF ↔ raster-image conversion and the v3.2 Pandoc
+document engine are implemented. The macOS Pandoc bundle is verified; Windows binary packaging
+and clean-install validation remain release work. The authoritative checklist is [`todos.md`](./todos.md).
 
 **Test fixtures:** `samples/` (git-ignored) holds HEIC, AVIF, transparent PNG, JPG, static +
 animated WebP, 20-frame GIF, TIFF, BMP, a corrupt JPG, and an 8000×6250 (50 MP) JPG. They were
@@ -63,6 +63,7 @@ Never commit them — they exist only to drive manual and engine tests.
 | 2026-11-14 | **Video uses the same FFmpeg engine as audio** | MP4, MOV, WEBM, and MKV are container targets in the shared format matrix; video streams are preserved while audio-only inputs continue to use `-vn`. |
 | 2026-11-14 | **v3 is split into PDF raster conversion first, Pandoc later** | PDF ↔ image conversion can build on the bundled ImageMagick path. Pandoc requires separate platform binaries, licensing review, and clean packaged-install validation, so it is not advertised or marked complete until those prerequisites are met. |
 | 2026-11-14 | **PDF uses ImageMagick at 150 DPI for rasterization** | PDF is a document format but PDF ↔ PNG/JPG/TIFF stays within the verified bundled ImageMagick pipeline; PDF inputs use an explicit 150 DPI density for predictable raster output. |
+| 2026-11-14 | **Pandoc supports a bounded document set** | TXT, Markdown, HTML, DOCX, and ODT use a bundled Pandoc engine; broader formats remain intentionally unsupported until separately validated. |
 
 ---
 
@@ -162,6 +163,9 @@ npm run build:win    # → dist/*.exe (NSIS installer + portable)
 - **FFmpeg binaries are external resources:** `scripts/fetch-binaries.mjs` copies the platform
   binary into `resources/bin/<platform>-<arch>`, and electron-builder packages that directory
   outside ASAR. Universal macOS preparation stages the x64 FFmpeg binary alongside x64 Sharp.
+- **Pandoc is a separate document engine:** its executable is resolved from the same external
+  resource directory and invoked without a shell. macOS fetches it through Homebrew; Windows
+  still needs a pinned official artifact and clean packaged-install validation.
 - **Audio options are intentionally limited:** audio jobs support metadata preservation/stripping;
   image-only quality, resize, and JPG background controls are not shown for audio rows.
 
