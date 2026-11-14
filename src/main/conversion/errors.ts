@@ -23,6 +23,10 @@ export function unsupportedConversionError(from: FormatId, to: FormatId): Conver
   )
 }
 
+export function unsupportedFileError(fileName: string): ConvertError {
+  return convertError('UNSUPPORTED_CONVERSION', `Unsupported file type: ${fileName}.`)
+}
+
 export function cancelledError(): ConvertError {
   return convertError('CANCELLED', 'Conversion cancelled.')
 }
@@ -68,6 +72,18 @@ export function errorDetail(value: unknown): string | undefined {
   if (value instanceof Error) return value.message
   if (typeof value === 'string') return value
   return undefined
+}
+
+export function toConvertError(error: unknown): ConvertError {
+  if (isConvertError(error)) {
+    return convertError(error.code, error.message, error.detail)
+  }
+
+  if (error instanceof Error) {
+    return convertError('UNKNOWN', error.message || 'Something went wrong.', error.stack)
+  }
+
+  return convertError('UNKNOWN', 'Something went wrong.', String(error))
 }
 
 function fileName(filePath: string): string {

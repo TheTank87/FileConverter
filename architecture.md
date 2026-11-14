@@ -126,7 +126,8 @@ can never disagree.
 ### 4.5 Output naming & collisions
 
 Output = `basename + newExtension` in the chosen output directory. If the file exists, append
-`-1`, `-2`, … until unique. Naming logic is a pure function and unit-tested.
+`-1`, `-2`, … until unique. Naming logic is a pure function (`naming.ts`) and unit-tested; the
+queue also reserves resolved paths for the duration of a batch so same-name jobs cannot race.
 
 Never overwrite the source file: if the resolved output path equals the input path (same folder,
 same extension), force the suffix path even if the source does not "exist" as a target yet.
@@ -418,6 +419,7 @@ the-diat-converter/
    │     ├─ sharpEngine.ts
    │     ├─ magickEngine.ts
    │     ├─ formats.ts         ← format matrix (source of truth)
+   │     ├─ naming.ts          ← pure output-path / collision resolver
    │     └─ queue.ts           ← batch queue, concurrency, progress
    ├─ preload/
    │  └─ index.ts              ← contextBridge → window.api

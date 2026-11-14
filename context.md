@@ -18,10 +18,11 @@ the user's machine. Nothing is uploaded. The flagship example is **HEIC → PNG*
 
 See [`architecture.md`](./architecture.md) for the full technical design.
 
-**Current status:** Phase 4 (formats & engines) complete — the format matrix, engine registry,
-`sharp` encoder, and ImageMagick fallback are in place and covered by integration tests. The build
-sequence lives in [`todos.md`](./todos.md); work top to bottom and check items off as they land.
-Next up: Phase 5 (queue, naming & cancellation).
+**Current status:** Phase 5 (queue, naming & cancellation) complete and verified — batches run
+FIFO with bounded concurrency, per-job cancellation, monotonic progress, isolated failures, and
+atomic temp cleanup. The full check suite passes (41 passed, 3 ImageMagick integration tests skipped
+when the bundled binary is absent). The build sequence lives in [`todos.md`](./todos.md); work top
+to bottom and check items off as they land. Next up: Phase 6 (IPC & preload).
 
 **Test fixtures:** `samples/` (git-ignored) holds HEIC, AVIF, transparent PNG, JPG, static +
 animated WebP, 20-frame GIF, TIFF, BMP, a corrupt JPG, and an 8000×6250 (50 MP) JPG. They were
@@ -136,6 +137,9 @@ npm run build:win    # → dist/*.exe (NSIS installer + portable)
   fails with `Electron uninstall`, run `node node_modules/electron/install.js`.
 - **Keep a global `BrowserWindow` reference:** without one, V8 may collect the window and the app
   quits unexpectedly a few seconds after launch.
+- **Output collisions are reserved per batch:** `queue.ts` tracks resolved output paths while jobs
+  run so two concurrent same-name jobs cannot both claim `<name>.<ext>` before either exists on
+  disk. The pure naming helper trusts the caller's `exists` predicate.
 
 ---
 
@@ -147,6 +151,7 @@ npm run build:win    # → dist/*.exe (NSIS installer + portable)
 | Build the app / see what's next | `todos.md` |
 | Add a supported format | `src/main/conversion/formats.ts` (+ engine `canConvert`) |
 | Change the conversion pipeline | `src/main/conversion/queue.ts`, `engine.ts` |
+| Change output naming / collisions | `src/main/conversion/naming.ts` |
 | Change the IPC surface | `shared/types.ts`, `src/main/ipc.ts`, `src/preload/index.ts` |
 | Change the UI | `src/renderer/src/App.tsx` and `components/` |
 | Change theming | `src/renderer/src/styles/tokens.css` |
@@ -160,15 +165,16 @@ npm run build:win    # → dist/*.exe (NSIS installer + portable)
 
 | Tool | Version used | Notes |
 |------|--------------|-------|
-| Node | 24.14.0 (LTS) ✅ | Electron's bundled Node is what runs at runtime; this is build-time only. |
-| npm | 11.9.0 ✅ | Lockfile committed; use `npm ci` in CI. |
-| OS | macOS 12+ / Windows 10 21H2+ | Current dev machine is Windows (win32). Windows ARM64 out of scope for v1. |
+| Node | 24.16.0 (LTS) ✅ | Electron's bundled Node is what runs at runtime; this is build-time only. |
+| npm | 11.13.0 ✅ | Lockfile committed; use `npm ci` in CI. |
+| OS | macOS 12+ / Windows 10 21H2+ | Current dev machine is macOS (darwin arm64); Windows is still a v1 target. Windows ARM64 out of scope for v1. |
 | Fixtures | `sips` + `ffmpeg` (dev only) | Not app dependencies; used once to generate `samples/`. |
 
 > `postinstall` currently runs only `electron-builder install-app-deps` (sharp ABI match).
 > The ImageMagick fetch script lands in Phase 10; until then, place `magick`/`magick.exe` in
 > `resources/bin/<platform>-<arch>/` manually. If it is missing, HEIC and BMP conversions fail with
-> `ENGINE_MISSING` — a setup error, not an app bug.
+> `ENGINE_MISSING` — a setup error, not an app bug. The three `magickEngine` integration tests are
+> gated on that binary, so they show as **skipped** (not failed) until it is present.
 
 ---
 
