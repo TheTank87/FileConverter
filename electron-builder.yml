@@ -9,6 +9,7 @@ mac:
   category: public.app-category.utilities
   target:
     - dmg
+  x64ArchFiles: '**/*.*'
 
 win:
   icon: icon.ico
@@ -19,7 +20,7 @@ win:
 files:
   - out/**
   - package.json
-  - resources/bin/**
 
-asarUnpack:
-  - resources/bin/**
+extraResources:
+  - from: resources/bin
+    to: bin

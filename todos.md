@@ -261,7 +261,8 @@ Windows) remains pending until Phase 10 provides bundled ImageMagick and install
 - [x] `postinstall`: `electron-builder install-app-deps` **and** `node scripts/fetch-binaries.mjs`.
 - [x] `binaries.ts` resolves correctly **inside the packaged app** (resources path, not
       asar `__dirname`); packaging now includes and unpacks `resources/bin/**`.
-- [ ] `npm run build:mac` → install the `.dmg`, run the QA matrix.
+- [ ] `npm run build:mac` → install the `.dmg`, run the QA matrix. Universal DMG build now
+       succeeds; installation and manual QA remain.
 - [ ] `npm run build:win` on Windows → install the `.exe`, run the QA matrix.
 - [x] Add third-party license notices for libvips/libheif/ImageMagick.
 

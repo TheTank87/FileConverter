@@ -149,6 +149,7 @@ async function fetchMacImageMagick(key, requestedArch) {
     await rm(temporaryDir, { recursive: true, force: true })
     await mkdir(bundledLib, { recursive: true })
     await cp(formulaPrefix, bundledPrefix, { recursive: true, dereference: true })
+    await pruneImageMagickBin(bundledPrefix)
 
     for (const dependency of dependencies) {
       const dependencyPrefix = (await execFileAsync('brew', ['--prefix', dependency])).stdout.trim()
@@ -174,7 +175,7 @@ export MAGICK_CONFIGURE_PATH="$ROOT/imagemagick/etc/ImageMagick-7:$ROOT/imagemag
 export MAGICK_CODER_MODULE_PATH="$ROOT/imagemagick/lib/ImageMagick/modules-Q16HDRI/coders"
 export MAGICK_FILTER_MODULE_PATH="$ROOT/imagemagick/lib/ImageMagick/modules-Q16HDRI/filters"
 export DYLD_LIBRARY_PATH="$ROOT/lib:$ROOT/imagemagick/lib\${DYLD_LIBRARY_PATH:+:$DYLD_LIBRARY_PATH}"
-exec "$ROOT/imagemagick/bin/magick" "$@"
+exec "$ROOT/imagemagick/bin/magick.bin" "$@"
 `
     )
     await chmod(launcher, 0o755)
@@ -182,6 +183,18 @@ exec "$ROOT/imagemagick/bin/magick" "$@"
     console.log(`Fetched and bundled ImageMagick for ${key} at ${destinationDir}.`)
   } finally {
     await rm(temporaryDir, { recursive: true, force: true })
+  }
+}
+
+async function pruneImageMagickBin(prefix) {
+  const binDir = join(prefix, 'bin')
+  const entries = await (await import('node:fs/promises')).readdir(binDir)
+  for (const entry of entries) {
+    if (entry === 'magick') {
+      await rename(join(binDir, entry), join(binDir, 'magick.bin'))
+    } else {
+      await rm(join(binDir, entry), { recursive: true, force: true })
+    }
   }
 }
 

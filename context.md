@@ -187,7 +187,9 @@ npm run build:win    # → dist/*.exe (NSIS installer + portable)
 > signs them ad hoc. The final app does not require Homebrew. If the binary is missing, HEIC and
 > BMP conversions fail with `ENGINE_MISSING` — a setup error, not an app bug. The three
 > `magickEngine` integration tests are gated on that binary, so they show as **skipped** (not
-> failed) until it is present.
+> failed) until it is present. Universal macOS packaging stages both Sharp architecture packages
+> before electron-builder runs; ImageMagick is copied as an external resource because its
+> architecture-specific files must not be merged into the ASAR.
 
 ---
 
