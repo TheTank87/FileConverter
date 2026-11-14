@@ -147,9 +147,12 @@ async function ensurePandoc(targetKey) {
     return
   }
 
-  await requireCommand('brew')
-  await execFileAsync('brew', ['install', 'pandoc'], { stdio: 'inherit' })
-  const prefix = (await execFileAsync('brew', ['--prefix', 'pandoc'])).stdout.trim()
+  const brew = getBrewCommand(targetKey)
+  await requireCommand(brew.command, brew.args)
+  await execFileAsync(brew.command, [...brew.args, 'install', 'pandoc'], { stdio: 'inherit' })
+  const prefix = (
+    await execFileAsync(brew.command, [...brew.args, '--prefix', 'pandoc'])
+  ).stdout.trim()
   const source = join(prefix, 'bin', 'pandoc')
   await mkdir(destinationDir, { recursive: true })
   await cp(source, destination)
@@ -164,7 +167,8 @@ async function sha256(path) {
 }
 
 async function fetchMacImageMagick(key, requestedArch) {
-  if (requestedArch !== process.arch) {
+  const canUseRosetta = process.arch === 'arm64' && requestedArch === 'x64'
+  if (requestedArch !== process.arch && !canUseRosetta) {
     throw new Error(
       `Cannot fetch a ${key} ImageMagick binary on ${process.platform}-${process.arch}; run this on a matching macOS runner.`
     )
@@ -185,23 +189,38 @@ async function fetchMacImageMagick(key, requestedArch) {
   }
 
   if (process.env.CI === 'true' || process.env.CI === '1') {
-    await requireCommand('brew')
+    const brew = getBrewCommand(key)
+    await requireCommand(brew.command, brew.args)
   } else {
     try {
-      await requireCommand('brew')
+      const brew = getBrewCommand(key)
+      await requireCommand(brew.command, brew.args)
     } catch (error) {
-      console.warn(`${error.message} Skipping ImageMagick download for ${key}.`)
+      console.warn(
+        `${error.message} Skipping ImageMagick download for ${key}. ` +
+          'Install Intel Homebrew at /usr/local/bin/brew to prepare x64 resources on Apple Silicon.'
+      )
       return
     }
   }
 
-  await execFileAsync('brew', ['install', 'imagemagick', 'ghostscript'], { stdio: 'inherit' })
-  const formulaPrefix = (await execFileAsync('brew', ['--prefix', 'imagemagick'])).stdout.trim()
-  const ghostscriptPrefix = (await execFileAsync('brew', ['--prefix', 'ghostscript'])).stdout.trim()
+  const brew = getBrewCommand(key)
+  await requireCommand(brew.command, brew.args)
+  await execFileAsync(brew.command, [...brew.args, 'install', 'imagemagick', 'ghostscript'], {
+    stdio: 'inherit'
+  })
+  const formulaPrefix = (
+    await execFileAsync(brew.command, [...brew.args, '--prefix', 'imagemagick'])
+  ).stdout.trim()
+  const ghostscriptPrefix = (
+    await execFileAsync(brew.command, [...brew.args, '--prefix', 'ghostscript'])
+  ).stdout.trim()
   if (!formulaPrefix) throw new Error('Homebrew did not return the ImageMagick prefix.')
   if (!ghostscriptPrefix) throw new Error('Homebrew did not return the Ghostscript prefix.')
 
-  const dependencies = (await execFileAsync('brew', ['deps', '--installed', 'imagemagick'])).stdout
+  const dependencies = (
+    await execFileAsync(brew.command, [...brew.args, 'deps', '--installed', 'imagemagick'])
+  ).stdout
     .split(/\r?\n/)
     .map((dependency) => dependency.trim())
     .filter(Boolean)
@@ -221,7 +240,9 @@ async function fetchMacImageMagick(key, requestedArch) {
     await pruneImageMagickBin(bundledPrefix)
 
     for (const dependency of dependencies) {
-      const dependencyPrefix = (await execFileAsync('brew', ['--prefix', dependency])).stdout.trim()
+      const dependencyPrefix = (
+        await execFileAsync(brew.command, [...brew.args, '--prefix', dependency])
+      ).stdout.trim()
       await copyLibraries(join(dependencyPrefix, 'lib'), bundledLib)
     }
     await copyLibraries(join(bundledPrefix, 'lib'), bundledLib)
@@ -347,10 +368,29 @@ async function findFiles(directory) {
 }
 
 async function requireCommand(command) {
+  const args = arguments.length > 1 ? arguments[1] : []
   try {
     await execFileAsync('which', [command])
+    if (args.length > 0) await execFileAsync(command, [...args, '--version'])
   } catch {
-    throw new Error(`Required command not found: ${command}`)
+    if (args.includes('/usr/local/bin/brew')) {
+      throw new Error(
+        'Intel Homebrew is required for darwin-x64 resources on Apple Silicon. ' +
+          'Install Rosetta and Intel Homebrew at /usr/local/bin/brew, then rerun npm run build:mac.'
+      )
+    }
+    throw new Error(`Required command not found or unavailable: ${command} ${args.join(' ')}`)
+  }
+}
+
+function getBrewCommand(targetKey) {
+  if (targetKey !== 'darwin-x64' || process.arch !== 'arm64') {
+    return { command: 'brew', args: [] }
+  }
+
+  return {
+    command: '/usr/bin/arch',
+    args: ['-x86_64', '/usr/local/bin/brew']
   }
 }
 

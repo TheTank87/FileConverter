@@ -261,8 +261,12 @@ Windows) remains pending until Phase 10 provides bundled ImageMagick and install
 - [x] `postinstall`: `electron-builder install-app-deps` **and** `node scripts/fetch-binaries.mjs`.
 - [x] `binaries.ts` resolves correctly **inside the packaged app** (resources path, not
       asar `__dirname`); packaging now includes and unpacks `resources/bin/**`.
-- [x] `npm run build:mac` → install the `.dmg`, run the QA matrix. Universal DMG build now
-       succeeds; installation and manual QA remain.
+- [ ] `npm run build:mac` → install the `.dmg`, run the QA matrix. Universal packaging now
+       requires a complete Intel resource bundle; `prepare-universal.mjs` uses Intel Homebrew
+       through Rosetta when `/usr/local/bin/brew` is available. On Apple Silicon, install
+       Rosetta and Intel Homebrew first:
+       `softwareupdate --install-rosetta --agree-to-license`, then run the Intel Homebrew
+       installer under `arch -x86_64`; rerun `npm run build:mac` afterward.
 - [ ] `npm run build:win` on Windows → install the `.exe`, run the QA matrix.
 - [x] Add third-party license notices for libvips/libheif/ImageMagick.
 

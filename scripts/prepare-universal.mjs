@@ -26,6 +26,12 @@ await execFileAsync(
   }
 )
 
+await execFileAsync(
+  process.platform === 'win32' ? 'npm.cmd' : 'npm',
+  ['run', 'fetch:binaries:universal'],
+  { stdio: 'inherit' }
+)
+
 const source = new URL('../node_modules/ffmpeg-static/ffmpeg', import.meta.url)
 const destinationDir = new URL('../resources/bin/darwin-x64/', import.meta.url)
 await mkdir(destinationDir, { recursive: true })
