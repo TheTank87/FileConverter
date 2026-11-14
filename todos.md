@@ -58,15 +58,17 @@ warning, addressed in Phase 3/8).
 
 ---
 
-## Phase 2 — Shared contracts
+## Phase 2 — Shared contracts ✅
 
-- [ ] Create `shared/types.ts` with every type from `architecture.md` §5.1, §5.2, and the
+- [x] Create `shared/types.ts` with every type from `architecture.md` §5.1, §5.2, and the
       engine/queue types used below.
-- [ ] Add `IPC` channel-name constants (`as const`) so main/preload cannot typo a channel.
-- [ ] Ensure **no** `electron`/`node` imports in `shared/` (enforce with a comment + review).
-- [ ] Wire path aliases so all three processes import `@shared/types`.
+- [x] Add `IPC` channel-name constants (`as const`) so main/preload cannot typo a channel.
+- [x] Ensure **no** `electron`/`node` imports in `shared/` (enforce with a comment + review).
+- [x] Wire path aliases so all three processes import `@shared/types`.
 
 **Done when:** `npm run typecheck` passes and `shared/types.ts` has no platform imports.
+**Verified:** full check suite passes; `@shared/types` resolves from main, preload, and renderer
+(temporary import check removed after `tsc` passed).
 
 ---
 

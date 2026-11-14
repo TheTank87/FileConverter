@@ -43,9 +43,9 @@ Electron + React + TypeScript, built with `electron-vite`, state via Zustand, pa
 
 ## Status
 
-Early development. Phase 1 (scaffold) is complete — the app boots a blank window — and the
-remaining work is tracked in [`todos.md`](./todos.md). Planned for later releases: per-file options
-(quality, resize), audio/video via FFmpeg, and document conversion.
+Early development. Phase 2 (shared contracts) is complete; the domain/IPC contract is defined and
+the remaining work is tracked in [`todos.md`](./todos.md). Planned for later releases: per-file
+options (quality, resize), audio/video via FFmpeg, and document conversion.
 
 ## Documentation
 
