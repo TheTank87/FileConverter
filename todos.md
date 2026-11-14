@@ -252,16 +252,17 @@ Windows) remains pending until Phase 10 provides bundled ImageMagick and install
 
 ## Phase 10 — Packaging & bundled binaries
 
-- [ ] `electron-builder.yml`: `appId`, `productName`, mac (universal dmg), win (NSIS +
+- [x] `electron-builder.yml`: `appId`, `productName`, mac (universal dmg), win (NSIS +
       portable), `files`, `asarUnpack` for `resources/bin/**`.
 - [ ] `scripts/fetch-binaries.mjs`: download static ImageMagick per `platform-arch` into
-      `resources/bin/…`, verify checksum, skip if present, fail loudly in CI.
-- [ ] `postinstall`: `electron-builder install-app-deps` **and** `node scripts/fetch-binaries.mjs`.
-- [ ] Verify `binaries.ts` resolves correctly **inside the packaged app** (resources path, not
-      asar `__dirname`).
+      `resources/bin/…`, verify checksum, skip if present, fail loudly in CI. Windows x64/arm64
+      is pinned; a verified macOS static artifact is still needed.
+- [x] `postinstall`: `electron-builder install-app-deps` **and** `node scripts/fetch-binaries.mjs`.
+- [x] `binaries.ts` resolves correctly **inside the packaged app** (resources path, not
+      asar `__dirname`); packaging now includes and unpacks `resources/bin/**`.
 - [ ] `npm run build:mac` → install the `.dmg`, run the QA matrix.
 - [ ] `npm run build:win` on Windows → install the `.exe`, run the QA matrix.
-- [ ] Add third-party license notices for libvips/libheif/ImageMagick.
+- [x] Add third-party license notices for libvips/libheif/ImageMagick.
 
 **Done when:** packaged builds on both OSes install, launch, and convert a HEIC with no dev
 tooling present.

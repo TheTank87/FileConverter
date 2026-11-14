@@ -7,6 +7,19 @@ directories:
 mac:
   icon: icon.icns
   category: public.app-category.utilities
+  target:
+    - dmg
 
 win:
   icon: icon.ico
+  target:
+    - nsis
+    - portable
+
+files:
+  - out/**
+  - package.json
+  - resources/bin/**
+
+asarUnpack:
+  - resources/bin/**

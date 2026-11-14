@@ -15,9 +15,9 @@
     "lint": "eslint . && prettier --check .",
     "format": "prettier --write .",
     "test": "vitest run",
-    "build:mac": "npm run build && electron-builder --mac",
+    "build:mac": "npm run build && electron-builder --mac --universal",
     "build:win": "npm run build && electron-builder --win",
-    "postinstall": "electron-builder install-app-deps"
+    "postinstall": "electron-builder install-app-deps && node scripts/fetch-binaries.mjs"
   },
   "repository": {
     "type": "git",
@@ -29,7 +29,6 @@
   },
   "homepage": "https://github.com/TheTank87/FileConverter#readme",
   "dependencies": {
-    "electron": "^45.3.2",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
     "sharp": "^0.35.5",
@@ -42,6 +41,7 @@
     "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^6.3.0",
     "electron-builder": "^26.18.0",
+    "electron": "^45.3.2",
     "electron-vite": "^6.0.0",
     "eslint": "^10.15.0",
     "eslint-config-prettier": "^10.1.8",

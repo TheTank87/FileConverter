@@ -181,11 +181,12 @@ npm run build:win    # → dist/*.exe (NSIS installer + portable)
 | OS | macOS 12+ / Windows 10 21H2+ | Current dev machine is macOS (darwin arm64); Windows is still a v1 target. Windows ARM64 out of scope for v1. |
 | Fixtures | `sips` + `ffmpeg` (dev only) | Not app dependencies; used once to generate `samples/`. |
 
-> `postinstall` currently runs only `electron-builder install-app-deps` (sharp ABI match).
-> The ImageMagick fetch script lands in Phase 10; until then, place `magick`/`magick.exe` in
-> `resources/bin/<platform>-<arch>/` manually. If it is missing, HEIC and BMP conversions fail with
-> `ENGINE_MISSING` — a setup error, not an app bug. The three `magickEngine` integration tests are
-> gated on that binary, so they show as **skipped** (not failed) until it is present.
+> `postinstall` runs `electron-builder install-app-deps` and the pinned ImageMagick fetch script
+> (Windows x64/arm64). macOS release artifacts still need a verified static ImageMagick source;
+> until one is configured, place `magick` in `resources/bin/<platform>-<arch>/` manually. If it is
+> missing, HEIC and BMP conversions fail with `ENGINE_MISSING` — a setup error, not an app bug.
+> The three `magickEngine` integration tests are gated on that binary, so they show as **skipped**
+> (not failed) until it is present.
 
 ---
 
