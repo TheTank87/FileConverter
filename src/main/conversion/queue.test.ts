@@ -16,7 +16,7 @@ import type {
 } from '@shared/types'
 import { tempPathFor } from './atomic'
 import { cancelledError } from './errors'
-import { createConversionQueue } from './queue'
+import { createConversionQueue, defaultConcurrency } from './queue'
 
 const tempDirs: string[] = []
 
@@ -60,6 +60,13 @@ async function until(predicate: () => boolean, timeoutMs = 1000): Promise<void> 
 }
 
 describe('conversion queue', () => {
+  it('caps default concurrency at four workers', () => {
+    const concurrency = defaultConcurrency()
+    expect(Number.isInteger(concurrency)).toBe(true)
+    expect(concurrency).toBeGreaterThanOrEqual(1)
+    expect(concurrency).toBeLessThanOrEqual(4)
+  })
+
   it('starts jobs in FIFO order with bounded concurrency', async () => {
     const started: string[] = []
     const releases = new Map<string, () => void>()
@@ -210,6 +217,114 @@ describe('conversion queue', () => {
 
     expect(await readdir(dir)).toEqual([])
     expect(existsSync(join(dir, 'photo.jpg'))).toBe(false)
+  })
+
+  it('reserves output paths so concurrent same-stem jobs do not collide', async () => {
+    const outputs: string[] = []
+    let release: () => void = () => undefined
+    const gate = new Promise<void>((resolve) => {
+      release = resolve
+    })
+
+    const engine: ConversionEngine = {
+      id: 'sharp',
+      canConvert: () => true,
+      async convert(input) {
+        outputs.push(input.outputPath)
+        await gate
+        return resultFor(input)
+      }
+    }
+
+    const queue = createConversionQueue({
+      engines: [engine],
+      exists: () => false,
+      concurrency: 2
+    })
+
+    const { batchId } = queue.start({
+      jobs: [job('/in/photo.png'), job('/in/photo.png')],
+      outputDir: null
+    })
+
+    await until(() => outputs.length === 2)
+    expect(outputs).toEqual(['/in/photo.jpg', '/in/photo-1.jpg'])
+
+    release()
+    await queue.wait(batchId)
+  })
+
+  it('reports unsupported formats without calling an engine', async () => {
+    const done: JobDoneEvent[] = []
+    let calls = 0
+
+    const engine: ConversionEngine = {
+      id: 'sharp',
+      canConvert: () => true,
+      async convert(input) {
+        calls += 1
+        return resultFor(input)
+      }
+    }
+
+    const queue = createConversionQueue({
+      engines: [engine],
+      exists: () => false,
+      onJobDone: (event) => done.push(event)
+    })
+
+    const { batchId } = queue.start({
+      jobs: [{ ...job('/in/notes.txt'), input: sample('/in/notes.txt', null) }],
+      outputDir: null
+    })
+
+    await queue.wait(batchId)
+
+    expect(calls).toBe(0)
+    expect(done[0]).toMatchObject({ error: { code: 'UNSUPPORTED_CONVERSION' } })
+  })
+
+  it('cleans up an in-flight temp file when cancelled', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'diat-queue-'))
+    tempDirs.push(dir)
+
+    const queued = {
+      id: randomUUID(),
+      input: sample(join(dir, 'photo.png')),
+      to: 'jpg' as FormatId,
+      options: {}
+    }
+    const tempPath = tempPathFor(join(dir, 'photo.jpg'), queued.id)
+
+    const engine: ConversionEngine = {
+      id: 'sharp',
+      canConvert: () => true,
+      async convert(input) {
+        await writeFile(tempPath, 'partial')
+        return new Promise<ConvertResult>((_resolve, reject) => {
+          const abort = (): void => reject(cancelledError())
+          if (input.signal?.aborted) abort()
+          else input.signal?.addEventListener('abort', abort, { once: true })
+        })
+      }
+    }
+
+    const done: JobDoneEvent[] = []
+    const queue = createConversionQueue({
+      engines: [engine],
+      exists: () => false,
+      concurrency: 1,
+      onJobDone: (event) => done.push(event)
+    })
+
+    const { batchId } = queue.start({ jobs: [queued], outputDir: null })
+    await until(() => existsSync(tempPath))
+
+    queue.cancel(batchId)
+    await queue.wait(batchId)
+
+    expect(done[0]).toMatchObject({ error: { code: 'CANCELLED' } })
+    expect(await readdir(dir)).toEqual([])
   })
 
   it('emits monotonic progress across phases', async () => {

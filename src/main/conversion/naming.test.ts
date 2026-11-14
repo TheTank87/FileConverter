@@ -68,6 +68,21 @@ describe('resolveOutputPath', () => {
     )
   })
 
+  it('resolves collisions inside the chosen output directory', () => {
+    const taken = new Set([join(exportsDir, 'holiday.2024.png')])
+    const exists = (path: string): boolean => taken.has(path)
+
+    expect(resolveOutputPath(source('holiday.2024.heic'), 'png', exportsDir, exists)).toBe(
+      join(exportsDir, 'holiday.2024-1.png')
+    )
+  })
+
+  it('compares normalized paths when protecting the source', () => {
+    const mixed = join(photos, '..', 'photos', 'photo.png')
+
+    expect(resolveOutputPath(mixed, 'png', null, missing)).toBe(join(photos, 'photo-1.png'))
+  })
+
   it('uses the canonical extension for aliased formats', () => {
     expect(resolveOutputPath(source('scan.tiff'), 'tiff', null, missing)).toBe(
       join(photos, 'scan.tif')

@@ -226,15 +226,27 @@ window title remains `The Diat Converter`.
 
 ## Phase 9 — Test coverage
 
-- [ ] Unit: format matrix integrity (unique ids, extensions mapped once, defaults in range).
-- [ ] Unit: `detectFormat` incl. uppercase/multi-dot/unknown.
-- [ ] Unit: `resolveOutputPath` collisions + never-overwrite-source.
-- [ ] Unit: `resolveEngine` priority and unsupported path.
-- [ ] Unit: settings validation/migration (corrupt file → defaults).
-- [ ] Integration (optional): queue with a stub engine — failure isolation, cancel semantics.
-- [ ] Manual: run `architecture.md` §10.1 QA matrix on macOS, then Windows.
+- [x] Unit: format matrix integrity (unique ids, extensions mapped once, defaults in range).
+- [x] Unit: `detectFormat` incl. uppercase/multi-dot/unknown.
+- [x] Unit: `resolveOutputPath` collisions + never-overwrite-source.
+- [x] Unit: `resolveEngine` priority and unsupported path.
+- [x] Unit: settings validation/migration (corrupt file → defaults).
+- [x] Integration (optional): queue with a stub engine — failure isolation, cancel semantics.
+- [ ] Manual: run `architecture.md` §10.1 QA matrix on macOS, then Windows. (Deferred to
+  Phase 10 release builds; unit/integration tests cover the format, naming, cancellation,
+  50 MP, animation, transparency, and unicode-path cases.)
 
 **Done when:** `npm test` is green and every pure function in the conversion layer has a test.
+**Verified:** full check suite passes (**107 passed, 3 ImageMagick integration tests skipped**).
+Added `conversion/errors.test.ts`, `conversion/atomic.test.ts`, and `files.test.ts`, and expanded
+the formats, settings, queue, engine, naming, and sharp engine suites. Format tests now assert
+unique IDs/extensions, canonical defaults, defensive copies, invalid-ID guards, and multi-dot
+detection; settings tests cover corrupt JSON, non-object/future-version files, and field-level
+sanitization; queue tests cover reserved output names, unsupported inputs, and temp cleanup after
+in-flight cancellation. Sharp integration also covers GIF→GIF/WEBP animation, transparent PNG→JPG,
+a 50 MP input, and paths containing spaces/unicode (sample-gated). Every exported pure function in
+`conversion/` is exercised. The installed-app §10.1 matrix (HEIC/BMP, read-only output folder,
+Windows) remains pending until Phase 10 provides bundled ImageMagick and installers.
 
 ---
 

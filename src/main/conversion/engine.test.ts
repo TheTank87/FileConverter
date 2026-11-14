@@ -53,6 +53,19 @@ describe('resolveEngine', () => {
 })
 
 describe('EngineRegistry', () => {
+  it('copies its input and exposes a defensive list', () => {
+    const sharp = fakeEngine('sharp', () => true)
+    const magick = fakeEngine('magick', () => true)
+    const input: ConversionEngine[] = [sharp, magick]
+    const registry = new EngineRegistry(input)
+
+    input.pop()
+    const listed = registry.list() as ConversionEngine[]
+    listed.pop()
+
+    expect(registry.list()).toEqual([sharp, magick])
+  })
+
   it('keeps registration order and resolves through it', () => {
     const sharp = fakeEngine('sharp', () => false)
     const magick = fakeEngine('magick', () => true)

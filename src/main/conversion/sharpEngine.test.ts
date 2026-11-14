@@ -1,5 +1,5 @@
 import { existsSync } from 'node:fs'
-import { mkdtemp, readFile, rm } from 'node:fs/promises'
+import { mkdir, mkdtemp, readFile, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import sharp from 'sharp'
@@ -74,12 +74,50 @@ describe.runIf(HAS_SAMPLES)('sharpEngine integration', () => {
     expect(data[2]).toBeLessThan(115)
   })
 
-  it('preserves animation when converting GIF to WEBP', async () => {
-    const { outputPath } = await convert('gif', 'webp', 'anim.gif')
-    const output = await sharp(await readFile(outputPath), { animated: true }).metadata()
+  it('preserves animation when converting GIF to WEBP or GIF', async () => {
+    const toWebp = await convert('gif', 'webp', 'anim.gif')
+    const webp = await sharp(await readFile(toWebp.outputPath), { animated: true }).metadata()
+    expect(webp.pages).toBe(20)
+    expect(webp.pageHeight).toBe(240)
 
-    expect(output.pages).toBe(20)
-    expect(output.pageHeight).toBe(240)
+    const toGif = await convert('gif', 'gif', 'anim.gif')
+    const gif = await sharp(await readFile(toGif.outputPath), { animated: true }).metadata()
+    expect(gif.pages).toBe(20)
+    expect(gif.pageHeight).toBe(240)
+  })
+
+  it('converts a 50 MP image', async () => {
+    const { outputPath } = await convert('jpg', 'webp', 'large-50mp.jpg')
+    const output = await sharp(outputPath).metadata()
+
+    expect(output.format).toBe('webp')
+    expect((output.width ?? 0) * (output.height ?? 0)).toBe(50_000_000)
+  })
+
+  it('handles paths with spaces and unicode', async () => {
+    const dir = await tempDir()
+    const nested = join(dir, 'spaced ünicode dir')
+    const inputPath = join(nested, 'café photo.png')
+    const outputPath = join(nested, 'café photo.jpg')
+
+    await mkdir(nested)
+    await sharp({
+      create: { width: 16, height: 16, channels: 3, background: '#3366cc' }
+    })
+      .png()
+      .toFile(inputPath)
+
+    await sharpEngine.convert({
+      jobId: 'unicode',
+      inputPath,
+      outputPath,
+      from: 'png',
+      to: 'jpg',
+      options: {}
+    })
+
+    const output = await sharp(outputPath).metadata()
+    expect(output.format).toBe('jpeg')
   })
 
   it('applies EXIF orientation and strips metadata by default', async () => {

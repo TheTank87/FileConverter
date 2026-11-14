@@ -52,6 +52,12 @@ describe('settings store', () => {
     await writeFile(corrupt.filePath, '{not json', 'utf8')
     await expect(corrupt.store.load()).resolves.toEqual(DEFAULT_SETTINGS)
 
+    for (const value of [null, [], 'settings', { theme: 'dark' }]) {
+      const invalidRoot = await createTempStore()
+      await writeFile(invalidRoot.filePath, JSON.stringify(value), 'utf8')
+      await expect(invalidRoot.store.load()).resolves.toEqual(DEFAULT_SETTINGS)
+    }
+
     const future = await createTempStore()
     await writeFile(
       future.filePath,
@@ -59,6 +65,47 @@ describe('settings store', () => {
       'utf8'
     )
     await expect(future.store.load()).resolves.toEqual(DEFAULT_SETTINGS)
+  })
+
+  it('sanitizes invalid fields without discarding valid ones', async () => {
+    const outputDir = join(tmpdir(), 'diat-output')
+    const { filePath, store } = await createTempStore()
+
+    await writeFile(
+      filePath,
+      JSON.stringify({
+        version: SETTINGS_VERSION,
+        outputDir,
+        defaultFormat: 'webp',
+        theme: 'neon',
+        extra: 'ignored'
+      }),
+      'utf8'
+    )
+
+    await expect(store.load()).resolves.toEqual({
+      outputDir,
+      defaultFormat: 'webp',
+      theme: 'system'
+    })
+
+    const relative = await createTempStore()
+    await writeFile(
+      relative.filePath,
+      JSON.stringify({
+        version: SETTINGS_VERSION,
+        outputDir: 'relative/path',
+        defaultFormat: 'svg',
+        theme: 'dark'
+      }),
+      'utf8'
+    )
+
+    await expect(relative.store.load()).resolves.toEqual({
+      outputDir: null,
+      defaultFormat: 'png',
+      theme: 'dark'
+    })
   })
 })
 
@@ -83,5 +130,15 @@ describe('sanitizeSettingsPatch', () => {
       defaultFormat: 'gif',
       outputDir
     })
+  })
+
+  it('keeps the valid subset of a mixed patch', () => {
+    expect(sanitizeSettingsPatch({ theme: 'dark', defaultFormat: 'svg', outputDir: 42 })).toEqual({
+      theme: 'dark'
+    })
+
+    expect(sanitizeSettingsPatch({ outputDir: null, theme: 'neon' })).toEqual({ outputDir: null })
+    expect(sanitizeSettingsPatch([])).toEqual({})
+    expect(sanitizeSettingsPatch({ outputDir: '' })).toEqual({})
   })
 })

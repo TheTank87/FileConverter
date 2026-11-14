@@ -440,6 +440,8 @@ the-diat-converter/
    │     ├─ magickEngine.ts
    │     ├─ formats.ts         ← format matrix (source of truth)
    │     ├─ naming.ts          ← pure output-path / collision resolver
+   │     ├─ errors.ts          ← typed conversion errors + normalization
+   │     ├─ atomic.ts          ← temp path, promote, discard
    │     └─ queue.ts           ← batch queue, concurrency, progress
    ├─ preload/
    │  └─ index.ts              ← contextBridge → window.api
@@ -500,7 +502,10 @@ phases are additive, not rewrites.
 
 ## 10. Testing & Quality
 
-- **Unit (Vitest):** format matrix integrity, output-filename/collision logic, engine selection.
+- **Unit (Vitest):** format matrix integrity, naming/collision logic, engine selection, settings
+  sanitization, typed error mapping, atomic temp paths, and queue ordering/cancellation.
+- **Integration (Vitest, sample-gated):** sharp conversions (animation, transparency, metadata,
+  50 MP, unicode paths) and ImageMagick HEIC/BMP when the bundled binary is present.
 - **Type safety:** `tsc --noEmit` across main/preload/renderer (`npm run typecheck`).
 - **Manual smoke:** convert a sample `.heic` → `.png` on both macOS and Windows.
 - **Lint:** ESLint + Prettier (added with the scaffold) — kept minimal to avoid churn.

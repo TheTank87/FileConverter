@@ -18,15 +18,16 @@ the user's machine. Nothing is uploaded. The flagship example is **HEIC → PNG*
 
 See [`architecture.md`](./architecture.md) for the full technical design.
 
-**Current status:** Phase 8 (settings, theme & polish) complete and verified — theme boots before
-first paint via a mirrored localStorage value, target format/output folder/theme persist across
-restarts, failures show human sentences with expandable technical details, and the app accepts a
-new batch after a failed or cancelled one. App icons and `electron-builder.yml` identities are in
-place. The full check suite passes (67 passed, 3 ImageMagick integration tests skipped when the
-bundled binary is absent), including renderer store and error-presentation tests. CDP smoke runs
-restored saved settings on restart and confirmed a corrupt-file failure followed by a successful
-new batch. The build sequence lives in [`todos.md`](./todos.md); work top to bottom and check
-items off as they land. Next up: Phase 9 (test coverage).
+**Current status:** Phase 9 (test coverage) complete for unit/integration coverage — the suite now
+has 107 passing tests (3 ImageMagick integration tests skipped until the bundled binary exists).
+Every exported pure function in `src/main/conversion/` is covered; format-matrix integrity,
+naming collisions/source protection, engine resolution, settings sanitization, typed errors,
+atomic temp handling, queue cancellation/failure isolation/output reservation, and `statFiles`
+are all tested. Sample-gated sharp integration covers animation, transparency, 50 MP inputs, and
+unicode/space paths. The installed-app §10.1 QA matrix (including HEIC/BMP and read-only output)
+remains for Phase 10 once bundled ImageMagick and release builds exist. The build sequence lives
+in [`todos.md`](./todos.md); work top to bottom and check items off as they land. Next up:
+Phase 10 (packaging & bundled binaries).
 
 **Test fixtures:** `samples/` (git-ignored) holds HEIC, AVIF, transparent PNG, JPG, static +
 animated WebP, 20-frame GIF, TIFF, BMP, a corrupt JPG, and an 8000×6250 (50 MP) JPG. They were
