@@ -18,16 +18,13 @@ the user's machine. Nothing is uploaded. The flagship example is **HEIC → PNG*
 
 See [`architecture.md`](./architecture.md) for the full technical design.
 
-**Current status:** Phase 9 (test coverage) complete for unit/integration coverage — the suite now
-has 107 passing tests (3 ImageMagick integration tests skipped until the bundled binary exists).
-Every exported pure function in `src/main/conversion/` is covered; format-matrix integrity,
-naming collisions/source protection, engine resolution, settings sanitization, typed errors,
-atomic temp handling, queue cancellation/failure isolation/output reservation, and `statFiles`
-are all tested. Sample-gated sharp integration covers animation, transparency, 50 MP inputs, and
-unicode/space paths. The installed-app §10.1 QA matrix (including HEIC/BMP and read-only output)
-remains for Phase 10 once bundled ImageMagick and release builds exist. The build sequence lives
-in [`todos.md`](./todos.md); work top to bottom and check items off as they land. Next up:
-Phase 10 (packaging & bundled binaries).
+**Current status:** v1.0 release foundations, v1.1 per-file image options, v1.2 widgets, and v2
+audio conversion are implemented. The project supports image conversion through Sharp and
+ImageMagick plus MP3/WAV/FLAC/AAC/OGG conversion through a bundled FFmpeg engine. The validation
+suite has 115 passing tests, and typecheck, lint, test, and production build all pass. Universal
+macOS packaging support is in place; installed-app QA and the Windows installer matrix remain
+environment-dependent follow-up work. The next backlog item is v2.1 video conversion (MP4, MOV,
+WEBM, MKV). The authoritative checklist is [`todos.md`](./todos.md).
 
 **Test fixtures:** `samples/` (git-ignored) holds HEIC, AVIF, transparent PNG, JPG, static +
 animated WebP, 20-frame GIF, TIFF, BMP, a corrupt JPG, and an 8000×6250 (50 MP) JPG. They were
@@ -60,6 +57,7 @@ Never commit them — they exist only to drive manual and engine tests.
 | 2026-11-14 | **Per-file image options** (quality, bounded resize, JPG background, metadata) | Advanced controls belong to each queued job so mixed-format batches can use different output settings without changing the global target. |
 | 2026-11-14 | **v1.2 widgets use renderer-local persistence** | Recent outputs and presets are lightweight local metadata; localStorage keeps them offline without expanding the main-process settings schema. |
 | 2026-11-14 | **FFmpeg is bundled from `ffmpeg-static`** | Audio conversion uses a platform-specific FFmpeg binary copied into `resources/bin/<platform>-<arch>` during postinstall, keeping packaged conversion offline and outside ASAR. |
+| 2026-11-14 | **Audio uses the existing queue and IPC pipeline** | FFmpeg jobs share validation, output collision handling, cancellation, progress events, atomic writes, and batch isolation with image jobs rather than introducing a second workflow. |
 
 ---
 
@@ -112,7 +110,7 @@ npm run build:win    # → dist/*.exe (NSIS installer + portable)
 
 | Term | Meaning |
 |------|---------|
-| **Engine** | A strategy that performs a conversion (`sharp` or `magick`). Implements `ConversionEngine`. |
+| **Engine** | A strategy that performs a conversion (`sharp`, `magick`, or `ffmpeg`). Implements `ConversionEngine`. |
 | **Job** | One input file + one target format within a batch. |
 | **Batch** | A set of jobs started together; has a `batchId`. |
 | **Format matrix** | The declarative list of supported formats in `formats.ts`. |
@@ -152,6 +150,13 @@ npm run build:win    # → dist/*.exe (NSIS installer + portable)
 - **Renderer payloads are untrusted:** `validation.ts` gates every invoke, requires absolute paths,
   bounds batches, and re-derives `FileInfo` metadata from the path. Invoke methods return
   `IpcResult<T>` rather than throwing across the context bridge.
+- **Audio formats are FFmpeg-only:** MP3, WAV, FLAC, AAC, and OGG are declared in the shared format
+  matrix and resolve to `ffmpegEngine`; Sharp and ImageMagick must not advertise audio capability.
+- **FFmpeg binaries are external resources:** `scripts/fetch-binaries.mjs` copies the platform
+  binary into `resources/bin/<platform>-<arch>`, and electron-builder packages that directory
+  outside ASAR. Universal macOS preparation stages the x64 FFmpeg binary alongside x64 Sharp.
+- **Audio options are intentionally limited:** audio jobs support metadata preservation/stripping;
+  image-only quality, resize, and JPG background controls are not shown for audio rows.
 
 ---
 
@@ -163,6 +168,7 @@ npm run build:win    # → dist/*.exe (NSIS installer + portable)
 | Build the app / see what's next | `todos.md` |
 | Add a supported format | `src/main/conversion/formats.ts` (+ engine `canConvert`) |
 | Change the conversion pipeline | `src/main/conversion/queue.ts`, `engine.ts` |
+| Change audio conversion | `src/main/conversion/ffmpegEngine.ts`, `formats.ts` |
 | Change output naming / collisions | `src/main/conversion/naming.ts` |
 | Change the IPC surface | `shared/types.ts`, `src/main/ipc.ts`, `src/preload/index.ts` |
 | Validate an IPC payload | `src/main/validation.ts` |
@@ -182,15 +188,14 @@ npm run build:win    # → dist/*.exe (NSIS installer + portable)
 | Node | 24.16.0 (LTS) ✅ | Electron's bundled Node is what runs at runtime; this is build-time only. |
 | npm | 11.13.0 ✅ | Lockfile committed; use `npm ci` in CI. |
 | OS | macOS 12+ / Windows 10 21H2+ | Current dev machine is macOS (darwin arm64); Windows is still a v1 target. Windows ARM64 out of scope for v1. |
-| Fixtures | `sips` + `ffmpeg` (dev only) | Not app dependencies; used once to generate `samples/`. |
+| Fixtures | `sips` + `ffmpeg` (dev only) | Local tools used to generate `samples/`; packaged conversion uses the pinned `ffmpeg-static` dependency. |
 
-> `postinstall` runs `electron-builder install-app-deps` and the pinned ImageMagick fetch script
+> `postinstall` runs `electron-builder install-app-deps` and the pinned ImageMagick/FFmpeg fetch script
 > (Windows x64/arm64). On macOS, the script uses Homebrew's verified ImageMagick bottle at build
 > time, copies the formula and runtime dylibs into the app resources, rewrites their paths, and
 > signs them ad hoc. The final app does not require Homebrew. If the binary is missing, HEIC and
 > BMP conversions fail with `ENGINE_MISSING` — a setup error, not an app bug. The three
-> `magickEngine` integration tests are gated on that binary, so they show as **skipped** (not
-> failed) until it is present. Universal macOS packaging stages both Sharp architecture packages
+> `magickEngine` integration tests require the bundled ImageMagick binary. Universal macOS packaging stages both Sharp and FFmpeg architecture binaries
 > before electron-builder runs; ImageMagick is copied as an external resource because its
 > architecture-specific files must not be merged into the ASAR.
 
