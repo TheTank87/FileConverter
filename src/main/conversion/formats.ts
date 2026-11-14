@@ -28,8 +28,9 @@ interface FormatSeed {
 
 const SHARP_READ = ['png', 'jpg', 'webp', 'avif', 'tiff', 'gif'] as const
 const SHARP_WRITE = ['png', 'jpg', 'webp', 'avif', 'tiff', 'gif'] as const
-const MAGICK_READ = [...FORMAT_IDS]
+const MAGICK_READ = ['heic', 'png', 'jpg', 'webp', 'avif', 'tiff', 'gif', 'bmp'] as const
 const MAGICK_WRITE = ['png', 'jpg', 'webp', 'avif', 'tiff', 'gif', 'bmp'] as const
+const FFMPEG_FORMATS = ['mp3', 'wav', 'flac', 'aac', 'ogg'] as const
 
 const LOSSY_DEFAULT: ConvertOptions = { quality: 80, keepMetadata: false }
 const LOSSLESS_DEFAULT: ConvertOptions = { keepMetadata: false }
@@ -98,6 +99,46 @@ const SEEDS: readonly FormatSeed[] = [
     mime: 'image/bmp',
     kind: 'image',
     defaultOptions: { ...LOSSLESS_DEFAULT }
+  },
+  {
+    id: 'mp3',
+    label: 'MP3',
+    extensions: ['mp3'],
+    mime: 'audio/mpeg',
+    kind: 'audio',
+    defaultOptions: { keepMetadata: false }
+  },
+  {
+    id: 'wav',
+    label: 'WAV',
+    extensions: ['wav'],
+    mime: 'audio/wav',
+    kind: 'audio',
+    defaultOptions: { keepMetadata: false }
+  },
+  {
+    id: 'flac',
+    label: 'FLAC',
+    extensions: ['flac'],
+    mime: 'audio/flac',
+    kind: 'audio',
+    defaultOptions: { keepMetadata: false }
+  },
+  {
+    id: 'aac',
+    label: 'AAC',
+    extensions: ['aac'],
+    mime: 'audio/aac',
+    kind: 'audio',
+    defaultOptions: { keepMetadata: false }
+  },
+  {
+    id: 'ogg',
+    label: 'OGG',
+    extensions: ['ogg', 'oga'],
+    mime: 'audio/ogg',
+    kind: 'audio',
+    defaultOptions: { keepMetadata: false }
   }
 ]
 
@@ -111,6 +152,10 @@ export const FORMAT_MATRIX: Record<FormatId, FormatSpec> = Object.fromEntries(
       magick: {
         read: (MAGICK_READ as readonly string[]).includes(seed.id),
         write: (MAGICK_WRITE as readonly string[]).includes(seed.id)
+      },
+      ffmpeg: {
+        read: (FFMPEG_FORMATS as readonly string[]).includes(seed.id),
+        write: (FFMPEG_FORMATS as readonly string[]).includes(seed.id)
       }
     }
 
@@ -118,8 +163,8 @@ export const FORMAT_MATRIX: Record<FormatId, FormatSpec> = Object.fromEntries(
       seed.id,
       {
         ...seed,
-        canRead: engines.sharp.read || engines.magick.read,
-        canWrite: engines.sharp.write || engines.magick.write,
+        canRead: engines.sharp.read || engines.magick.read || engines.ffmpeg.read,
+        canWrite: engines.sharp.write || engines.magick.write || engines.ffmpeg.write,
         engines
       }
     ]
@@ -164,7 +209,11 @@ export function detectFormat(filePath: string): FormatId | null {
 export function isSupported(from: FormatId, to: FormatId): boolean {
   if (!isFormatId(from) || !isFormatId(to)) return false
 
-  return engineCanConvert('sharp', from, to) || engineCanConvert('magick', from, to)
+  return (
+    engineCanConvert('sharp', from, to) ||
+    engineCanConvert('magick', from, to) ||
+    engineCanConvert('ffmpeg', from, to)
+  )
 }
 
 export function resolveOutputFormat(from: FormatId, to: FormatId): FormatId | null {
@@ -177,6 +226,10 @@ export function engineCanConvert(engine: EngineId, from: FormatId, to: FormatId)
   const source = FORMAT_MATRIX[from].engines[engine]
   const target = FORMAT_MATRIX[to].engines[engine]
   return source.read && target.write
+}
+
+export function isAudioFormat(id: FormatId | null): boolean {
+  return id !== null && FORMAT_MATRIX[id].kind === 'audio'
 }
 
 export function resolveOptions(to: FormatId, options: ConvertOptions = {}): ConvertOptions {

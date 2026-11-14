@@ -20,6 +20,7 @@ can open anywhere.
 - **Remembers** your theme (system/light/dark) and last output folder between launches.
 - After converting, **open the result** or reveal it in Finder/Explorer.
 - Reorder queued files, save reusable presets, and revisit recent conversions.
+- Convert audio between MP3, WAV, FLAC, AAC, and OGG using the bundled FFmpeg engine.
 
 ## Supported formats (v1: images)
 
@@ -65,6 +66,13 @@ Each queued file can override the defaults before conversion:
 The Presets panel saves a target format and its per-file options locally for reuse. The Recent
 conversions panel keeps the latest completed outputs on this device and provides Open and Reveal
 actions. No file contents or conversion data leave the machine.
+
+### Audio conversion
+
+Audio conversion supports MP3, WAV, FLAC, AAC, and OGG. FFmpeg is bundled during installation
+for the current platform, and audio jobs use the same queued batch workflow, cancellation,
+progress reporting, unique output naming, and atomic writes as image jobs. Audio metadata is
+removed by default; the per-file **Keep metadata** option is available for audio jobs as well.
 
 ## Documentation
 

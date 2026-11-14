@@ -20,6 +20,8 @@ describe('detectFormat', () => {
     expect(detectFormat('photo.jpeg')).toBe('jpg')
     expect(detectFormat('scan.tif')).toBe('tiff')
     expect(detectFormat('clip.WEBP')).toBe('webp')
+    expect(detectFormat('recording.MP3')).toBe('mp3')
+    expect(detectFormat('voice.oga')).toBe('ogg')
   })
 
   it('returns null for missing or unknown extensions', () => {
@@ -93,6 +95,13 @@ describe('format matrix', () => {
     expect(isSupported('bmp', 'png')).toBe(true)
     expect(isSupported('png', 'bmp')).toBe(true)
     expect(isSupported('heic', 'bmp')).toBe(true)
+  })
+
+  it('routes audio formats through FFmpeg', () => {
+    expect(engineCanConvert('ffmpeg', 'wav', 'mp3')).toBe(true)
+    expect(engineCanConvert('ffmpeg', 'flac', 'ogg')).toBe(true)
+    expect(engineCanConvert('magick', 'wav', 'mp3')).toBe(false)
+    expect(isSupported('mp3', 'wav')).toBe(true)
   })
 
   it('treats unknown format ids as unsupported', () => {

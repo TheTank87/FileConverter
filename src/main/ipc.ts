@@ -11,14 +11,21 @@ import { convertError, toConvertError } from './conversion/errors'
 import { FORMAT_LIST, getFormats } from './conversion/formats'
 import { magickEngine } from './conversion/magickEngine'
 import { sharpEngine } from './conversion/sharpEngine'
+import { ffmpegEngine } from './conversion/ffmpegEngine'
 import { statFiles } from './files'
 import { sanitizeSettingsPatch, type SettingsStore } from './settings'
 import { parseBatchId, parseConvertRequest, parsePath, parsePathList } from './validation'
 
 const IMAGE_EXTENSIONS = [...new Set(FORMAT_LIST.flatMap((format) => format.extensions))]
 
+const AUDIO_EXTENSIONS = [
+  ...new Set(
+    FORMAT_LIST.filter((format) => format.kind === 'audio').flatMap((format) => format.extensions)
+  )
+]
+
 const FILE_FILTERS: FileFilter[] = [
-  { name: 'Images', extensions: IMAGE_EXTENSIONS },
+  { name: 'Images and audio', extensions: [...IMAGE_EXTENSIONS, ...AUDIO_EXTENSIONS] },
   { name: 'All Files', extensions: ['*'] }
 ]
 
@@ -37,7 +44,7 @@ export async function ok<T>(work: () => T | Promise<T>): Promise<IpcResult<T>> {
 export function registerIpc(deps: IpcDependencies): void {
   const registered = new Set<IpcChannel>()
   const queue = createConversionQueue({
-    engines: [sharpEngine, magickEngine],
+    engines: [sharpEngine, magickEngine, ffmpegEngine],
     onProgress: (event) => broadcast(IPC_CHANNELS.progress, event),
     onJobDone: (event) => broadcast(IPC_CHANNELS.jobDone, event)
   })

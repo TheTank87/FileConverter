@@ -127,7 +127,7 @@ export function App() {
       </section>
 
       <footer className="app__footer" aria-hidden="true">
-        Reserved space for future widgets
+        Offline image and audio conversion
       </footer>
 
       <p className="sr-only" role="status" aria-live="polite">

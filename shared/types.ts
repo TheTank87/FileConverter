@@ -1,7 +1,21 @@
 // Cross-process contract shared by main, preload, and renderer.
 // Keep this module dependency-free: no `electron`, no Node built-ins.
 
-export const FORMAT_IDS = ['heic', 'png', 'jpg', 'webp', 'avif', 'tiff', 'gif', 'bmp'] as const
+export const FORMAT_IDS = [
+  'heic',
+  'png',
+  'jpg',
+  'webp',
+  'avif',
+  'tiff',
+  'gif',
+  'bmp',
+  'mp3',
+  'wav',
+  'flac',
+  'aac',
+  'ogg'
+] as const
 
 export type FormatId = (typeof FORMAT_IDS)[number]
 
@@ -11,7 +25,7 @@ export const THEME_MODES = ['system', 'light', 'dark'] as const
 
 export type ThemeMode = (typeof THEME_MODES)[number]
 
-export type EngineId = 'sharp' | 'magick'
+export type EngineId = 'sharp' | 'magick' | 'ffmpeg'
 
 export interface ConvertOptions {
   quality?: number

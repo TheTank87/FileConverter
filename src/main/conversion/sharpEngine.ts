@@ -126,6 +126,8 @@ function encode(pipeline: Sharp, to: FormatId, options: ConvertOptions): Sharp {
     case 'heic':
     case 'bmp':
       throw new Error(`sharp cannot encode ${to.toUpperCase()}`)
+    default:
+      throw new Error(`sharp cannot encode ${to.toUpperCase()}`)
   }
 }
 

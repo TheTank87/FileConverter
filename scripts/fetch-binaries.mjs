@@ -6,9 +6,11 @@ import { dirname, basename, join, relative, sep } from 'node:path'
 import { pipeline } from 'node:stream/promises'
 import { fileURLToPath } from 'node:url'
 import { execFile } from 'node:child_process'
+import { createRequire } from 'node:module'
 import { promisify } from 'node:util'
 
 const execFileAsync = promisify(execFile)
+const require = createRequire(import.meta.url)
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
 const binaryRoot = join(root, 'resources', 'bin')
 const version = '7.1.2-35'
@@ -34,6 +36,8 @@ const requestedPlatform = getOption('--platform') ?? process.platform
 const requestedArch = getOption('--arch') ?? process.arch
 const key = `${requestedPlatform}-${requestedArch}`
 const release = releases[key]
+
+await ensureFfmpeg(key)
 
 if (requestedPlatform === 'darwin') {
   await fetchMacImageMagick(key, requestedArch)
@@ -95,6 +99,34 @@ async function download(url, output) {
   }
 
   await pipeline(response.body, createWriteStream(output))
+}
+
+async function ensureFfmpeg(targetKey) {
+  const destinationDir = join(binaryRoot, targetKey)
+  const destination = join(destinationDir, targetKey.startsWith('win32-') ? 'ffmpeg.exe' : 'ffmpeg')
+
+  try {
+    await stat(destination)
+    console.log(`FFmpeg already present at ${destination}; skipping.`)
+    return
+  } catch (error) {
+    if (error?.code !== 'ENOENT') throw error
+  }
+
+  let source
+  try {
+    source = require('ffmpeg-static')
+  } catch (error) {
+    throw new Error(`The ffmpeg-static package is required to bundle FFmpeg.`, { cause: error })
+  }
+  if (typeof source !== 'string') {
+    throw new Error(`ffmpeg-static does not provide a binary for ${targetKey}.`)
+  }
+
+  await mkdir(destinationDir, { recursive: true })
+  await cp(source, destination)
+  if (!targetKey.startsWith('win32-')) await chmod(destination, 0o755)
+  console.log(`Bundled FFmpeg for ${targetKey} at ${destination}.`)
 }
 
 async function sha256(path) {

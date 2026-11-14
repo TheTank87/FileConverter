@@ -7,6 +7,22 @@ export type BinaryResolution = { ok: true; path: string } | { ok: false; error: 
 
 const PLATFORM_ARCH = `${process.platform}-${process.arch}`
 const MAGICK_BINARY = process.platform === 'win32' ? 'magick.exe' : 'magick'
+const FFMPEG_BINARY = process.platform === 'win32' ? 'ffmpeg.exe' : 'ffmpeg'
+
+export function resolveFfmpegPath(): BinaryResolution {
+  const candidates = bundledBinDirs().map((dir) => join(dir, FFMPEG_BINARY))
+  const found = candidates.find((candidate) => existsSync(candidate))
+
+  if (found) return { ok: true, path: found }
+  return {
+    ok: false,
+    error: {
+      code: 'ENGINE_MISSING',
+      message: 'FFmpeg is not available. Reinstall the app or run the binary fetch script.',
+      detail: `Looked in: ${candidates.join(', ')}`
+    }
+  }
+}
 
 export function resolveMagickPath(): BinaryResolution {
   const candidates = bundledBinDirs().map((dir) => join(dir, MAGICK_BINARY))

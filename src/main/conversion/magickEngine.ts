@@ -30,7 +30,7 @@ const MAGICK_CODERS = {
   tiff: 'TIFF',
   gif: 'GIF',
   bmp: 'BMP'
-} satisfies Record<Exclude<FormatId, 'heic'>, string>
+} satisfies Partial<Record<FormatId, string>>
 
 export interface MagickEngineDeps {
   resolveBinary?: () => BinaryResolution
@@ -123,7 +123,8 @@ function buildArgs(input: ConvertInput, options: ConvertOptions, tempPath: strin
 
 function coderFor(to: FormatId): string {
   if (to === 'heic') throw unsupportedConversionError('heic', 'heic')
-  return MAGICK_CODERS[to]
+  if (!(to in MAGICK_CODERS)) throw unsupportedConversionError(to, to)
+  return MAGICK_CODERS[to as keyof typeof MAGICK_CODERS]
 }
 
 function runMagick(
