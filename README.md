@@ -1,5 +1,5 @@
 # The Diat Converter
-
+The Diat Formation is proud to present the local Diat Converter that works on your PC and laptop!
 A local, offline file converter for Windows and macOS. It does what online converters
 (Convertio, CloudConvert, etc.) do — change a file from one format to another — but entirely on
 your own machine. **Nothing is uploaded.** No account, no internet connection, no telemetry.
@@ -33,9 +33,9 @@ fast) with a bundled **ImageMagick** CLI as a fallback for formats libvips doesn
 BMP).
 
 ## Why local?
-
-Online converters require uploading your files — which may be personal photos — to someone
-else's server. This app keeps the whole pipeline on-device, so it works on a plane, in a locked-down
+Online converters require uploading photos to a cloud server that may or may not be attacked! Also, it's on a website which requires internet.
+There is also the pesky and annoying cookies, advertisement pop-ups and the fact that the guy running the show can shut down the converter site anytime. 
+Let's be a little bit more independent with this local app that keeps the whole pipeline on-device, so it works on a plane, in a locked-down
 environment, or just without handing your files to a third party.
 
 ## Tech
@@ -46,10 +46,7 @@ Electron + React + TypeScript, built with `electron-vite`, state via Zustand, pa
 
 ## Status
 
-Early development. Phase 4 (formats & engines) is complete; the format matrix, `sharp` encoder, and
-ImageMagick fallback are in place. The remaining work is tracked in [`todos.md`](./todos.md).
-Planned for later releases: per-file options (quality, resize), audio/video via FFmpeg, and document
-conversion.
+Ready to be deployed. All phases completed, extra functions like audio and video conversion are being added.
 
 ### Per-file options
 
