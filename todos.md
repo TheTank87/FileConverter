@@ -72,21 +72,24 @@ warning, addressed in Phase 3/8).
 
 ---
 
-## Phase 3 — Main process foundation
+## Phase 3 — Main process foundation ✅
 
-- [ ] `src/main/index.ts`: `app.whenReady`, single-instance lock, create `BrowserWindow` with
+- [x] `src/main/index.ts`: `app.whenReady`, single-instance lock, create `BrowserWindow` with
       `contextIsolation: true`, `nodeIntegration: false`, `sandbox: true`, `preload` path.
-- [ ] macOS lifecycle: re-create window on `activate`, quit on `window-all-closed` except darwin.
-- [ ] Harden navigation: deny `will-navigate` and `setWindowOpenHandler` to external URLs.
-- [ ] Minimal application menu (macOS app menu, Edit/View/Window) — no custom actions yet.
-- [ ] `src/main/settings.ts`: load/save `userData/settings.json` with defaults, validation,
+- [x] macOS lifecycle: re-create window on `activate`, quit on `window-all-closed` except darwin.
+- [x] Harden navigation: deny `will-navigate` and `setWindowOpenHandler` to external URLs.
+- [x] Minimal application menu (macOS app menu, Edit/View/Window) — no custom actions yet.
+- [x] `src/main/settings.ts`: load/save `userData/settings.json` with defaults, validation,
       debounce, atomic write, and `version` field.
-- [ ] `src/main/binaries.ts`: resolve bundled CLI path per `platform-arch`, verify existence,
+- [x] `src/main/binaries.ts`: resolve bundled CLI path per `platform-arch`, verify existence,
       return a typed `ENGINE_MISSING` error when absent.
-- [ ] `src/main/ipc.ts`: an `ok/error` wrapper + a typed `registerIpc()` skeleton that logs
+- [x] `src/main/ipc.ts`: an `ok/error` wrapper + a typed `registerIpc()` skeleton that logs
       unhandled channels in dev.
 
 **Done when:** app opens, settings file is created on first change, typecheck passes.
+**Verified:** full check suite passes (5 settings tests); `npm run dev` opens the window with no
+errors. Noted: only `settings:get` / `settings:set` are wired so far; remaining channels are
+dev-logged fallbacks until Phase 6.
 
 ---
 

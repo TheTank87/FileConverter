@@ -43,9 +43,10 @@ Electron + React + TypeScript, built with `electron-vite`, state via Zustand, pa
 
 ## Status
 
-Early development. Phase 2 (shared contracts) is complete; the domain/IPC contract is defined and
-the remaining work is tracked in [`todos.md`](./todos.md). Planned for later releases: per-file
-options (quality, resize), audio/video via FFmpeg, and document conversion.
+Early development. Phase 3 (main process foundation) is complete; the window lifecycle, settings
+persistence, and IPC foundation are in place. The remaining work is tracked in
+[`todos.md`](./todos.md). Planned for later releases: per-file options (quality, resize),
+audio/video via FFmpeg, and document conversion.
 
 ## Documentation
 

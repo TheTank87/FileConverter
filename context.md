@@ -18,10 +18,10 @@ the user's machine. Nothing is uploaded. The flagship example is **HEIC → PNG*
 
 See [`architecture.md`](./architecture.md) for the full technical design.
 
-**Current status:** Phase 2 (shared contracts) complete — `shared/types.ts` defines the domain,
-engine, queue, error, and IPC-channel contract with no platform imports, and all three processes
-resolve `@shared/types`. The build sequence lives in [`todos.md`](./todos.md); work top to bottom
-and check items off as they land. Next up: Phase 3 (main process foundation).
+**Current status:** Phase 3 (main process foundation) complete — window lifecycle, single-instance
+lock, navigation hardening, application menu, persisted settings, binary path resolution, and the
+IPC wrapper skeleton are in place. The build sequence lives in [`todos.md`](./todos.md); work top to
+bottom and check items off as they land. Next up: Phase 4 (formats & engines).
 
 **Test fixtures:** `samples/` (git-ignored) holds HEIC, AVIF, transparent PNG, JPG, static +
 animated WebP, 20-frame GIF, TIFF, BMP, a corrupt JPG, and an 8000×6250 (50 MP) JPG. They were

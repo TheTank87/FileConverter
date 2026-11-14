@@ -1,11 +1,15 @@
 // Cross-process contract shared by main, preload, and renderer.
 // Keep this module dependency-free: no `electron`, no Node built-ins.
 
-export type FormatId = 'heic' | 'png' | 'jpg' | 'webp' | 'avif' | 'tiff' | 'gif' | 'bmp'
+export const FORMAT_IDS = ['heic', 'png', 'jpg', 'webp', 'avif', 'tiff', 'gif', 'bmp'] as const
+
+export type FormatId = (typeof FORMAT_IDS)[number]
 
 export type FormatKind = 'image' | 'audio' | 'video' | 'document'
 
-export type ThemeMode = 'system' | 'light' | 'dark'
+export const THEME_MODES = ['system', 'light', 'dark'] as const
+
+export type ThemeMode = (typeof THEME_MODES)[number]
 
 export type EngineId = 'sharp' | 'magick'
 
