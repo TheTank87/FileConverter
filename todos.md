@@ -261,11 +261,9 @@ Windows) remains pending until Phase 10 provides bundled ImageMagick and install
 - [x] `postinstall`: `electron-builder install-app-deps` **and** `node scripts/fetch-binaries.mjs`.
 - [x] `binaries.ts` resolves correctly **inside the packaged app** (resources path, not
       asar `__dirname`); packaging now includes and unpacks `resources/bin/**`.
-- [ ] `npm run build:mac` → install the `.dmg`, run the QA matrix. Universal packaging now
-       requires a complete Intel resource bundle. If Intel Homebrew is unavailable locally,
-       run the manually triggered `Prepare macOS x64 resources` workflow, download its
-       `macos-darwin-x64-resources` artifact, and run
-       `MAC_X64_RESOURCES_DIR=/path/to/darwin-x64 npm run build:mac`.
+- [ ] `npm run build:mac` → install the arm64 `.dmg` on Apple Silicon and run the QA matrix.
+      `npm run build:mac:universal` remains available only when a complete darwin-x64 resource
+      bundle has been supplied from an Intel macOS environment.
 - [ ] `npm run build:win` on Windows → install the `.exe`, run the QA matrix.
 - [x] Add third-party license notices for libvips/libheif/ImageMagick.
 

@@ -472,7 +472,8 @@ the-diat-converter/
   after packaging. `binaries.ts` resolves the correct path for the running platform.
 
 ### Packaging
-- `npm run build:mac` → universal `.dmg` (x64 + arm64).
+- `npm run build:mac` → native Apple Silicon `.dmg`; `npm run build:mac:universal` requires
+  complete x64 and arm64 resource bundles.
 - `npm run build:win` → NSIS installer + portable `.exe`.
 - Code signing is **not** configured initially (unsigned builds still run; users may need to allow
   them once). Signing/notarization is a documented follow-up.

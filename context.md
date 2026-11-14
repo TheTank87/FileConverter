@@ -103,7 +103,8 @@ npm run build        # bundle main/preload/renderer to ./out
 
 ### Packaging
 ```bash
-npm run build:mac    # → dist/*.dmg (universal)
+npm run build:mac    # → dist/*-arm64.dmg on Apple Silicon
+npm run build:mac:universal # → dist/*-universal.dmg when x64 resources are available
 npm run build:win    # → dist/*.exe (NSIS installer + portable)
 ```
 
@@ -162,7 +163,9 @@ npm run build:win    # → dist/*.exe (NSIS installer + portable)
   matrix and resolve to `ffmpegEngine`; the FFmpeg command preserves video streams for these jobs.
 - **FFmpeg binaries are external resources:** `scripts/fetch-binaries.mjs` copies the platform
   binary into `resources/bin/<platform>-<arch>`, and electron-builder packages that directory
-  outside ASAR. Universal macOS preparation stages the x64 FFmpeg binary alongside x64 Sharp.
+  outside ASAR. Native Apple Silicon packaging uses the complete arm64 resource bundle. Universal
+  packaging additionally requires separately prepared x64 ImageMagick, Ghostscript, Pandoc, and
+  FFmpeg resources.
 - **Pandoc is a separate document engine:** its executable is resolved from the same external
   resource directory and invoked without a shell. macOS fetches it through Homebrew; Windows
   still needs a pinned official artifact and clean packaged-install validation.
