@@ -18,7 +18,8 @@ export const FORMAT_IDS = [
   'mp4',
   'mov',
   'webm',
-  'mkv'
+  'mkv',
+  'pdf'
 ] as const
 
 export type FormatId = (typeof FORMAT_IDS)[number]

@@ -136,4 +136,24 @@ describe.runIf(HAS_MAGICK && existsSync(SAMPLE_DIR))('magickEngine integration',
     const header = await readFile(outputPath)
     expect(header.subarray(0, 2).toString('ascii')).toBe('BM')
   })
+
+  it('converts a raster image to PDF through ImageMagick', async () => {
+    const dir = await tempDir()
+    const outputPath = join(dir, 'transparent.pdf')
+    const engine = createMagickEngine({
+      resolveBinary: (): BinaryResolution => ({ ok: true, path: MAGICK_PATH })
+    })
+
+    await engine.convert({
+      jobId: 'png-to-pdf',
+      inputPath: join(SAMPLE_DIR, 'transparent.png'),
+      outputPath,
+      from: 'png',
+      to: 'pdf',
+      options: {}
+    })
+
+    const header = await readFile(outputPath)
+    expect(header.subarray(0, 5).toString('ascii')).toBe('%PDF-')
+  })
 })

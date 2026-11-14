@@ -21,10 +21,11 @@ See [`architecture.md`](./architecture.md) for the full technical design.
 **Current status:** v1.0 release foundations, v1.1 per-file image options, v1.2 widgets, and v2
 audio conversion are implemented. The project supports image conversion through Sharp and
 ImageMagick plus MP3/WAV/FLAC/AAC/OGG audio and MP4/MOV/WEBM/MKV video conversion through a bundled
-FFmpeg engine. The validation
+FFmpeg engine, plus PDF ↔ raster-image conversion through ImageMagick. The validation
 suite has 115 passing tests, and typecheck, lint, test, and production build all pass. Universal
 macOS packaging support is in place; installed-app QA and the Windows installer matrix remain
-environment-dependent follow-up work. The next backlog item is v3 document conversion. The
+environment-dependent follow-up work. v3.1 PDF ↔ raster-image conversion is complete; Pandoc-backed
+text conversion is intentionally deferred to v3.2 until its bundled runtime is verified. The
 authoritative checklist is [`todos.md`](./todos.md).
 
 **Test fixtures:** `samples/` (git-ignored) holds HEIC, AVIF, transparent PNG, JPG, static +
@@ -60,6 +61,8 @@ Never commit them — they exist only to drive manual and engine tests.
 | 2026-11-14 | **FFmpeg is bundled from `ffmpeg-static`** | Audio conversion uses a platform-specific FFmpeg binary copied into `resources/bin/<platform>-<arch>` during postinstall, keeping packaged conversion offline and outside ASAR. |
 | 2026-11-14 | **Audio uses the existing queue and IPC pipeline** | FFmpeg jobs share validation, output collision handling, cancellation, progress events, atomic writes, and batch isolation with image jobs rather than introducing a second workflow. |
 | 2026-11-14 | **Video uses the same FFmpeg engine as audio** | MP4, MOV, WEBM, and MKV are container targets in the shared format matrix; video streams are preserved while audio-only inputs continue to use `-vn`. |
+| 2026-11-14 | **v3 is split into PDF raster conversion first, Pandoc later** | PDF ↔ image conversion can build on the bundled ImageMagick path. Pandoc requires separate platform binaries, licensing review, and clean packaged-install validation, so it is not advertised or marked complete until those prerequisites are met. |
+| 2026-11-14 | **PDF uses ImageMagick at 150 DPI for rasterization** | PDF is a document format but PDF ↔ PNG/JPG/TIFF stays within the verified bundled ImageMagick pipeline; PDF inputs use an explicit 150 DPI density for predictable raster output. |
 
 ---
 
@@ -199,7 +202,10 @@ npm run build:win    # → dist/*.exe (NSIS installer + portable)
 > time, copies the formula and runtime dylibs into the app resources, rewrites their paths, and
 > signs them ad hoc. The final app does not require Homebrew. If the binary is missing, HEIC and
 > BMP conversions fail with `ENGINE_MISSING` — a setup error, not an app bug. The three
-> `magickEngine` integration tests require the bundled ImageMagick binary. Universal macOS packaging stages both Sharp and FFmpeg architecture binaries
+> `magickEngine` integration tests require the bundled ImageMagick binary. PDF rasterization also
+> requires Ghostscript, which the macOS fetch script installs and bundles beside ImageMagick;
+> the launcher adds its `bin` directory to `PATH`. Universal macOS packaging stages both Sharp
+> and FFmpeg architecture binaries.
 > before electron-builder runs; ImageMagick is copied as an external resource because its
 > architecture-specific files must not be merged into the ASAR.
 

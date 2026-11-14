@@ -21,6 +21,8 @@ can open anywhere.
 - After converting, **open the result** or reveal it in Finder/Explorer.
 - Reorder queued files, save reusable presets, and revisit recent conversions.
 - Convert audio between MP3, WAV, FLAC, AAC, and OGG using the bundled FFmpeg engine.
+- Convert video between MP4, MOV, WEBM, and MKV using the same offline FFmpeg pipeline.
+- Convert PDF files to PNG, JPG, or TIFF, and raster images to PDF using bundled ImageMagick.
 
 ## Supported formats (v1: images)
 
@@ -70,6 +72,12 @@ Audio conversion supports MP3, WAV, FLAC, AAC, and OGG. FFmpeg is bundled during
 for the current platform, and audio jobs use the same queued batch workflow, cancellation,
 progress reporting, unique output naming, and atomic writes as image jobs. Audio metadata is
 removed by default; the per-file **Keep metadata** option is available for audio jobs as well.
+
+### PDF conversion
+
+PDF conversion supports PDF ↔ PNG, JPG, and TIFF through the bundled ImageMagick engine. PDF
+inputs are rasterized at 150 DPI. Conversion remains local and uses the same queue, cancellation,
+collision-safe naming, and atomic output behavior as the other formats.
 
 ## Documentation
 

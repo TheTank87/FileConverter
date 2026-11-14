@@ -29,7 +29,8 @@ const MAGICK_CODERS = {
   avif: 'AVIF',
   tiff: 'TIFF',
   gif: 'GIF',
-  bmp: 'BMP'
+  bmp: 'BMP',
+  pdf: 'PDF'
 } satisfies Partial<Record<FormatId, string>>
 
 export interface MagickEngineDeps {
@@ -92,7 +93,8 @@ export function createMagickEngine(deps: MagickEngineDeps = {}): ConversionEngin
 export const magickEngine: ConversionEngine = createMagickEngine()
 
 function buildArgs(input: ConvertInput, options: ConvertOptions, tempPath: string): string[] {
-  const args = [input.inputPath, '-auto-orient']
+  const args = input.from === 'pdf' ? ['-density', '150', input.inputPath] : [input.inputPath]
+  args.push('-auto-orient')
 
   if (options.resizeWidth !== undefined || options.resizeHeight !== undefined) {
     args.push('-resize', `${options.resizeWidth ?? ''}x${options.resizeHeight ?? ''}>`)

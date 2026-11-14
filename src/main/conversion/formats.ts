@@ -28,8 +28,8 @@ interface FormatSeed {
 
 const SHARP_READ = ['png', 'jpg', 'webp', 'avif', 'tiff', 'gif'] as const
 const SHARP_WRITE = ['png', 'jpg', 'webp', 'avif', 'tiff', 'gif'] as const
-const MAGICK_READ = ['heic', 'png', 'jpg', 'webp', 'avif', 'tiff', 'gif', 'bmp'] as const
-const MAGICK_WRITE = ['png', 'jpg', 'webp', 'avif', 'tiff', 'gif', 'bmp'] as const
+const MAGICK_READ = ['heic', 'png', 'jpg', 'webp', 'avif', 'tiff', 'gif', 'bmp', 'pdf'] as const
+const MAGICK_WRITE = ['png', 'jpg', 'webp', 'avif', 'tiff', 'gif', 'bmp', 'pdf'] as const
 const FFMPEG_FORMATS = ['mp3', 'wav', 'flac', 'aac', 'ogg', 'mp4', 'mov', 'webm', 'mkv'] as const
 
 const LOSSY_DEFAULT: ConvertOptions = { quality: 80, keepMetadata: false }
@@ -170,6 +170,14 @@ const SEEDS: readonly FormatSeed[] = [
     extensions: ['mkv'],
     mime: 'video/x-matroska',
     kind: 'video',
+    defaultOptions: { keepMetadata: false }
+  },
+  {
+    id: 'pdf',
+    label: 'PDF',
+    extensions: ['pdf'],
+    mime: 'application/pdf',
+    kind: 'document',
     defaultOptions: { keepMetadata: false }
   }
 ]

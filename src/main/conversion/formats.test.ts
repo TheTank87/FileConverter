@@ -22,6 +22,7 @@ describe('detectFormat', () => {
     expect(detectFormat('clip.WEBP')).toBe('webp')
     expect(detectFormat('recording.MP3')).toBe('mp3')
     expect(detectFormat('voice.oga')).toBe('ogg')
+    expect(detectFormat('document.PDF')).toBe('pdf')
   })
 
   it('returns null for missing or unknown extensions', () => {
@@ -110,6 +111,14 @@ describe('format matrix', () => {
     expect(engineCanConvert('ffmpeg', 'mp4', 'webm')).toBe(true)
     expect(engineCanConvert('ffmpeg', 'mov', 'mkv')).toBe(true)
     expect(isSupported('webm', 'mp4')).toBe(true)
+  })
+
+  it('routes PDF and raster image conversions through ImageMagick', () => {
+    expect(engineCanConvert('magick', 'pdf', 'png')).toBe(true)
+    expect(engineCanConvert('magick', 'png', 'pdf')).toBe(true)
+    expect(engineCanConvert('magick', 'pdf', 'jpg')).toBe(true)
+    expect(engineCanConvert('ffmpeg', 'pdf', 'png')).toBe(false)
+    expect(isSupported('pdf', 'tiff')).toBe(true)
   })
 
   it('treats unknown format ids as unsupported', () => {

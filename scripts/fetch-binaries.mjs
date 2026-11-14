@@ -147,7 +147,10 @@ async function fetchMacImageMagick(key, requestedArch) {
 
   try {
     await stat(launcher)
-    console.log(`ImageMagick already present at ${launcher}; skipping download.`)
+    await stat(join(destinationDir, 'ghostscript', 'bin', 'gs'))
+    console.log(
+      `ImageMagick and Ghostscript already present at ${destinationDir}; skipping download.`
+    )
     return
   } catch (error) {
     if (error?.code !== 'ENOENT') throw error
@@ -164,9 +167,11 @@ async function fetchMacImageMagick(key, requestedArch) {
     }
   }
 
-  await execFileAsync('brew', ['install', 'imagemagick'], { stdio: 'inherit' })
+  await execFileAsync('brew', ['install', 'imagemagick', 'ghostscript'], { stdio: 'inherit' })
   const formulaPrefix = (await execFileAsync('brew', ['--prefix', 'imagemagick'])).stdout.trim()
+  const ghostscriptPrefix = (await execFileAsync('brew', ['--prefix', 'ghostscript'])).stdout.trim()
   if (!formulaPrefix) throw new Error('Homebrew did not return the ImageMagick prefix.')
+  if (!ghostscriptPrefix) throw new Error('Homebrew did not return the Ghostscript prefix.')
 
   const dependencies = (await execFileAsync('brew', ['deps', '--installed', 'imagemagick'])).stdout
     .split(/\r?\n/)
@@ -181,6 +186,10 @@ async function fetchMacImageMagick(key, requestedArch) {
     await rm(temporaryDir, { recursive: true, force: true })
     await mkdir(bundledLib, { recursive: true })
     await cp(formulaPrefix, bundledPrefix, { recursive: true, dereference: true })
+    await cp(ghostscriptPrefix, join(temporaryDir, 'ghostscript'), {
+      recursive: true,
+      dereference: true
+    })
     await pruneImageMagickBin(bundledPrefix)
 
     for (const dependency of dependencies) {
@@ -188,6 +197,7 @@ async function fetchMacImageMagick(key, requestedArch) {
       await copyLibraries(join(dependencyPrefix, 'lib'), bundledLib)
     }
     await copyLibraries(join(bundledPrefix, 'lib'), bundledLib)
+    await copyLibraries(join(temporaryDir, 'ghostscript', 'lib'), bundledLib)
     await rewriteDylibReferences(temporaryDir, bundledLib)
     await signMachOFiles(temporaryDir)
 
@@ -197,6 +207,10 @@ async function fetchMacImageMagick(key, requestedArch) {
       dereference: true
     })
     await cp(bundledLib, join(destinationDir, 'lib'), { recursive: true, dereference: true })
+    await cp(join(temporaryDir, 'ghostscript'), join(destinationDir, 'ghostscript'), {
+      recursive: true,
+      dereference: true
+    })
     await writeFile(
       launcher,
       `#!/bin/sh
@@ -207,6 +221,7 @@ export MAGICK_CONFIGURE_PATH="$ROOT/imagemagick/etc/ImageMagick-7:$ROOT/imagemag
 export MAGICK_CODER_MODULE_PATH="$ROOT/imagemagick/lib/ImageMagick/modules-Q16HDRI/coders"
 export MAGICK_FILTER_MODULE_PATH="$ROOT/imagemagick/lib/ImageMagick/modules-Q16HDRI/filters"
 export DYLD_LIBRARY_PATH="$ROOT/lib:$ROOT/imagemagick/lib\${DYLD_LIBRARY_PATH:+:$DYLD_LIBRARY_PATH}"
+export PATH="$ROOT/ghostscript/bin:$PATH"
 exec "$ROOT/imagemagick/bin/magick.bin" "$@"
 `
     )
@@ -249,7 +264,7 @@ async function copyLibraries(sourceDir, destinationDir) {
 async function rewriteDylibReferences(rootDir, bundledLib) {
   const files = await findFiles(rootDir)
   for (const file of files) {
-    if (!file.endsWith('.dylib') && basename(file) !== 'magick') continue
+    if (!file.endsWith('.dylib') && !['magick', 'gs'].includes(basename(file))) continue
     const { stdout } = await execFileAsync('otool', ['-L', file])
     for (const line of stdout.split(/\r?\n/).slice(1)) {
       const dependency = line.trim().split(' ')[0]
