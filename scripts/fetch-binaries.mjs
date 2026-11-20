@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto'
 import { createReadStream, createWriteStream } from 'node:fs'
-import { chmod, cp, mkdir, rename, rm, stat, writeFile } from 'node:fs/promises'
+import { chmod, copyFile, cp, mkdir, rename, rm, stat, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { dirname, basename, join, relative, sep } from 'node:path'
 import { pipeline } from 'node:stream/promises'
@@ -83,7 +83,7 @@ try {
   }
 
   if (release.kind === 'executable') {
-    await rename(temporaryArchive, destination)
+    await copyFile(temporaryArchive, destination)
     if (requestedPlatform !== 'win32') await chmod(destination, 0o755)
     process.exit(0)
   }
