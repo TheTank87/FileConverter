@@ -252,8 +252,9 @@ Windows) remains pending until Phase 10 provides bundled ImageMagick and install
 
 ## Phase 10 — Packaging & bundled binaries
 
-- [x] `electron-builder.yml`: `appId`, `productName`, mac (universal dmg), win (NSIS +
-      portable), `files`, `asarUnpack` for `resources/bin/**`.
+- [x] `electron-builder.yml`: `appId`, `productName`, mac (arm64 dmg), win (NSIS +
+      portable), `files`, and `extraResources` for `resources/bin/<platform>-${arch}` (binaries
+      stay outside the ASAR).
 - [x] `scripts/fetch-binaries.mjs`: fetch ImageMagick per `platform-arch` into `resources/bin/…`,
       verify the official Windows release checksums, bundle the verified Homebrew macOS bottle
       with its dylib dependencies, skip if present, and fail loudly in CI. `--platform`/`--arch`
@@ -274,11 +275,12 @@ tooling present.
 
 ## Phase 11 — CI & release
 
-- [x] GitHub Actions: matrix `macos-latest` + `windows-latest`; `npm ci` →
+- [x] `.github/workflows/ci.yml`: matrix `macos-latest` + `windows-latest`; `npm ci` →
       `typecheck` → `lint` → `test` → `build`.
-- [x] Upload packaged artifacts per OS.
-- [x] Add a `CHECKSUMS`/release note template.
-- [x] Document unsigned-install workaround in `README.md`.
+- [x] `.github/workflows/release.yml`: builds signed artifacts, verifies signatures, uploads
+      per-OS artifacts, and creates a GitHub release with generated notes.
+- [x] `scripts/generate-checksums.mjs` writes SHA-256 `CHECKSUMS.txt` for release artifacts.
+- [x] Document signed releases and the unsigned-install workaround in `README.md`.
 - [x] Tag `v1.0.0` only after §9 of `context.md` is fully checked.
 
 **Done when:** a tag build produces installers from CI and a clean machine can use them.
@@ -295,4 +297,14 @@ tooling present.
   - [x] v3.1: PDF ↔ raster images through the bundled ImageMagick pipeline.
   - [x] v3.2: Pandoc-backed text/document conversion implemented and packaged for both Windows
         and macOS.
-- [ ] Code signing + notarization for macOS and Windows.
+- [x] Code signing + notarization pipeline for macOS and Windows: hardened runtime entitlements,
+      electron-builder config, verification scripts, and a secret-backed release workflow.
+- [ ] Produce and verify signed/notarized installers once the Apple Developer ID certificate +
+      App Store Connect API key and the Windows code-signing certificate are provisioned as
+      repository secrets. Local builds remain unsigned and are fine for development.
+
+**Verified:** `npm run typecheck && npm run lint && npm test && npm run build` pass (121 tests).
+`npm run build:mac` still produces the native arm64 DMG locally; electron-builder reports signing
+skipped because no Developer ID identity is installed. `node scripts/verify-signing.mjs` correctly
+fails on unsigned local artifacts, and `node scripts/generate-checksums.mjs` produces SHA-256
+entries. Signing/notarization itself can only be verified in the secret-backed release workflow.

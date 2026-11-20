@@ -26,9 +26,11 @@ Pandoc. The validation suite has 121 passing tests; typecheck, lint, test, and p
 pass. A native Apple Silicon macOS package now builds successfully as
 `dist/The Diat Converter-0.1.0-arm64.dmg`. Universal packaging remains optional and blocked on a
 separately prepared Intel resource bundle because this Apple Silicon machine cannot produce the
-matching x64 ImageMagick, Ghostscript, and Pandoc binaries locally. Windows installer packaging,
-clean-install QA, and code signing/notarization remain release work. The authoritative checklist
-is [`todos.md`](./todos.md).
+matching x64 ImageMagick, Ghostscript, and Pandoc binaries locally. The signing/notarization
+pipeline (Developer ID + notarization on macOS, Authenticode on Windows) is implemented in the
+release workflow; producing signed installers requires the repository secrets listed in
+[`architecture.md`](./architecture.md#packaging). Clean-install QA remains release work. The
+authoritative checklist is [`todos.md`](./todos.md).
 
 **Test fixtures:** `samples/` (git-ignored) holds HEIC, AVIF, transparent PNG, JPG, static +
 animated WebP, 20-frame GIF, TIFF, BMP, a corrupt JPG, and an 8000×6250 (50 MP) JPG. They were
@@ -67,6 +69,7 @@ Never commit them — they exist only to drive manual and engine tests.
 | 2026-11-14 | **PDF uses ImageMagick at 150 DPI for rasterization** | PDF is a document format but PDF ↔ PNG/JPG/TIFF stays within the verified bundled ImageMagick pipeline; PDF inputs use an explicit 150 DPI density for predictable raster output. |
 | 2026-11-14 | **Pandoc supports a bounded document set** | TXT, Markdown, HTML, DOCX, and ODT use a bundled Pandoc engine; broader formats remain intentionally unsupported until separately validated. |
 | 2026-11-14 | **Native arm64 macOS packaging is the local release path** | The current Apple Silicon machine can build and package the complete arm64 resource bundle. Universal packaging is retained as `build:mac:universal` but requires a complete separately prepared darwin-x64 bundle. |
+| 2026-11-19 | **Release builds are Developer ID signed/notarized on macOS and SHA-256 Authenticode signed on Windows** | CI proves artifact provenance and avoids Gatekeeper/SmartScreen friction; credentials stay in repository secrets and local unsigned builds still work. |
 
 ---
 
@@ -109,10 +112,15 @@ npm run build        # bundle main/preload/renderer to ./out
 npm run build:mac    # → dist/*-arm64.dmg on Apple Silicon
 npm run build:mac:universal # → dist/*-universal.dmg only with complete x64 resources
 npm run build:win    # → dist/*.exe (NSIS installer + portable)
+npm run verify:signing:mac  # codesign/spctl/stapler checks on a signed arm64 build
+npm run verify:signing:win  # Authenticode checks on signed Windows executables
+npm run checksums    # → dist/CHECKSUMS.txt (SHA-256 for release artifacts)
 ```
 
-> Windows installers are best produced on a Windows machine/runner (see CI matrix in
-> `architecture.md`). Building on macOS may require Wine for some NSIS steps.
+> Windows installers are best produced on a Windows machine/runner (see workflows in
+> `architecture.md`). Building on macOS may require Wine for some NSIS steps. Signed release
+> artifacts are produced by `.github/workflows/release.yml`; local builds stay unsigned without
+> credentials and are fine for development.
 
 ---
 
@@ -210,7 +218,9 @@ npm run build:win    # → dist/*.exe (NSIS installer + portable)
 > `postinstall` runs `electron-builder install-app-deps` and the pinned ImageMagick/FFmpeg fetch script
 > (Windows x64/arm64). On macOS, the script uses Homebrew's verified ImageMagick bottle at build
 > time, copies the formula and runtime dylibs into the app resources, rewrites their paths, and
-> signs them ad hoc. The final app does not require Homebrew. If the binary is missing, HEIC and
+> signs them ad hoc. Release signing replaces those ad-hoc signatures with the Developer ID
+> identity and applies the hardened-runtime entitlements from `resources/`. The final app does not
+> require Homebrew. If the binary is missing, HEIC and
 > BMP conversions fail with `ENGINE_MISSING` — a setup error, not an app bug. The three
 > `magickEngine` integration tests require the bundled ImageMagick binary. PDF rasterization also
 > requires Ghostscript, which the macOS fetch script installs and bundles beside ImageMagick;

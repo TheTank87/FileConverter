@@ -9,6 +9,11 @@ mac:
   category: public.app-category.utilities
   target:
     - dmg
+  hardenedRuntime: true
+  gatekeeperAssess: false
+  entitlements: resources/entitlements.mac.plist
+  entitlementsInherit: resources/entitlements.mac.inherit.plist
+  notarize: true
   x64ArchFiles: '**/*.*'
   extraResources:
     - from: resources/bin/darwin-${arch}
@@ -19,6 +24,14 @@ win:
   target:
     - nsis
     - portable
+  signAndEditExecutable: true
+  signExts:
+    - .exe
+    - .dll
+  signtoolOptions:
+    signingHashAlgorithms:
+      - sha256
+    rfc3161TimeStampServer: https://timestamp.digicert.com
   extraResources:
     - from: resources/bin/win32-${arch}
       to: bin/win32-${arch}

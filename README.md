@@ -51,6 +51,31 @@ Electron + React + TypeScript, built with `electron-vite`, state via Zustand, pa
 
 Ready to be deployed. All phases completed, extra functions like audio and video conversion are being added.
 
+## Installation and verification
+
+Tagged releases are built by GitHub Actions: the macOS `.dmg` is signed with a Developer ID
+certificate and notarized, and the Windows `.exe` installer and portable build are Authenticode
+signed with SHA-256 and a timestamp. Signed installers open without the unsigned-app workarounds
+below.
+
+Each release includes `CHECKSUMS.txt` with SHA-256 hashes. Verify a downloaded file with:
+
+```bash
+shasum -a 256 'The Diat Converter-0.1.0-arm64.dmg'
+```
+
+```powershell
+Get-FileHash -Algorithm SHA256 'The Diat Converter Setup 0.1.0.exe'
+```
+
+Local `npm run build:mac` / `npm run build:win` builds are unsigned unless you supply signing
+credentials. On macOS, an unsigned build may need **Right-click → Open** once (or
+`xattr -d com.apple.quarantine 'The Diat Converter.dmg'`); on Windows, choose **More info → Run
+anyway** in SmartScreen. Only do this for builds you produced or trust.
+
+Repository secrets required for signed releases are documented in
+[`architecture.md`](./architecture.md#packaging).
+
 ### Per-file options
 
 Each queued file can override the defaults before conversion:

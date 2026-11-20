@@ -475,13 +475,36 @@ the-diat-converter/
 - `npm run build:mac` → native Apple Silicon `.dmg`; `npm run build:mac:universal` requires
   complete x64 and arm64 resource bundles.
 - `npm run build:win` → NSIS installer + portable `.exe`.
-- Code signing is **not** configured initially (unsigned builds still run; users may need to allow
-  them once). Signing/notarization is a documented follow-up.
+- Local builds are unsigned unless credentials are present. Release builds use `Developer ID
+  Application` signing with hardened runtime, entitlements in `resources/entitlements.mac*.plist`,
+  and `@electron/notarize` via `electron-builder`'s `mac.notarize` setting. Windows release builds
+  use `WIN_CSC_LINK` / `WIN_CSC_KEY_PASSWORD` (base64 PFX + password) with SHA-256 signatures and
+  RFC 3161 timestamps for the installer, portable executable, and bundled `.dll` files.
+- `scripts/verify-signing.mjs` checks Developer ID authority, team ID, `codesign`, `spctl`, and
+  stapled tickets on macOS, and Authenticode validity on Windows. `scripts/generate-checksums.mjs`
+  writes `dist/CHECKSUMS.txt` for release artifacts.
+
+Required GitHub repository secrets for `.github/workflows/release.yml`:
+
+| Secret | Purpose |
+|--------|---------|
+| `MAC_CERTIFICATE_BASE64` | Base64 Developer ID Application `.p12` |
+| `MAC_CERTIFICATE_PASSWORD` | Password for the `.p12` |
+| `MAC_KEYCHAIN_PASSWORD` | Temporary CI keychain password |
+| `MAC_SIGNING_IDENTITY` | Exact `Developer ID Application: …` certificate name |
+| `APPLE_API_KEY_BASE64` | Base64 App Store Connect `.p8` key |
+| `APPLE_API_KEY_ID` | App Store Connect key ID |
+| `APPLE_API_ISSUER` | App Store Connect issuer ID |
+| `APPLE_TEAM_ID` | Apple team ID, also checked by the verification script |
+| `WIN_CSC_LINK` | Base64 Windows code-signing `.pfx` |
+| `WIN_CSC_KEY_PASSWORD` | Password for the `.pfx` |
 
 ### CI
-- GitHub Actions matrix on `macos-latest` + `windows-latest` runs `typecheck`, `test`, and
-  `build`, uploading installers as artifacts. Building Windows artifacts on a Windows runner
-  avoids cross-compilation quirks.
+- `.github/workflows/ci.yml` runs `typecheck`, `lint`, `test`, and `build` on `macos-latest` and
+  `windows-latest` for pushes to `main` and pull requests.
+- `.github/workflows/release.yml` builds signed artifacts on tag pushes, verifies their signatures,
+  uploads them, and creates a GitHub release with generated notes and `CHECKSUMS.txt`. Building on
+  native runners avoids cross-compilation quirks.
 
 ---
 
@@ -542,7 +565,7 @@ phases are additive, not rewrites.
 | sharp lacks a format | Fall back to bundled ImageMagick; matrix declares engine support. |
 | Bundled binaries missing at runtime | `binaries.ts` verifies presence and returns a typed error; fetch script runs in `postinstall`. |
 | Large app size (~150 MB Electron) | Accepted trade-off for zero-setup, offline, cross-platform installs. |
-| macOS Gatekeeper on unsigned builds | Document the right-click → Open workaround; add signing later. |
+| macOS Gatekeeper on unsigned builds | Release builds are Developer ID signed and notarized; local unsigned builds document the right-click → Open workaround. |
 | IPC security | `contextIsolation` on, no `nodeIntegration`, `execFile` (no shell), typed allow-listed channels. |
 
 ---
