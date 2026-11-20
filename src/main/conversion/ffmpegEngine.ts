@@ -1,5 +1,5 @@
 import { spawn } from 'node:child_process'
-import type { ConversionEngine, ConvertInput, ProgressFn } from '@shared/types'
+import type { ConversionEngine, ConvertInput, FormatId, ProgressFn } from '@shared/types'
 import { resolveFfmpegPath, type BinaryResolution } from '../binaries'
 import { discardTemp, promoteTemp, tempPathFor } from './atomic'
 import {
@@ -14,6 +14,31 @@ import { engineCanConvert } from './formats'
 
 export interface FfmpegEngineDeps {
   resolveBinary?: () => BinaryResolution
+}
+
+const AUDIO_FORMATS = new Set<FormatId>(['mp3', 'wav', 'flac', 'aac', 'ogg'])
+
+const FFMPEG_MUXERS: Partial<Record<FormatId, string>> = {
+  mp3: 'mp3',
+  wav: 'wav',
+  flac: 'flac',
+  aac: 'adts',
+  ogg: 'ogg',
+  mp4: 'mp4',
+  mov: 'mov',
+  webm: 'webm',
+  mkv: 'matroska'
+}
+
+export function buildFfmpegArgs(input: ConvertInput, tempPath: string): string[] {
+  const muxer = FFMPEG_MUXERS[input.to]
+  if (!muxer) throw new Error(`No FFmpeg muxer configured for ${input.to}.`)
+
+  const args = ['-y', '-i', input.inputPath]
+  if (input.options.keepMetadata !== true) args.push('-map_metadata', '-1')
+  if (AUDIO_FORMATS.has(input.to)) args.push('-vn')
+  args.push('-f', muxer, '-progress', 'pipe:2', tempPath)
+  return args
 }
 
 export function createFfmpegEngine(deps: FfmpegEngineDeps = {}): ConversionEngine {
@@ -71,11 +96,7 @@ function runFfmpeg(
   tempPath: string,
   onProgress?: ProgressFn
 ): Promise<void> {
-  const args = ['-y', '-i', input.inputPath]
-  if (input.options.keepMetadata !== true) args.push('-map_metadata', '-1')
-  const audioFormats = new Set(['mp3', 'wav', 'flac', 'aac', 'ogg'])
-  if (audioFormats.has(input.from)) args.push('-vn')
-  args.push('-progress', 'pipe:2', tempPath)
+  const args = buildFfmpegArgs(input, tempPath)
 
   return new Promise((resolve, reject) => {
     const child = spawn(binary, args, { windowsHide: true })

@@ -308,3 +308,5 @@ tooling present.
 skipped because no Developer ID identity is installed. `node scripts/verify-signing.mjs` correctly
 fails on unsigned local artifacts, and `node scripts/generate-checksums.mjs` produces SHA-256
 entries. Signing/notarization itself can only be verified in the secret-backed release workflow.
+
+## Phase 13 - Multi-file uploads and more file conversion options

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { BinaryResolution } from '../binaries'
-import { createFfmpegEngine } from './ffmpegEngine'
+import { buildFfmpegArgs, createFfmpegEngine } from './ffmpegEngine'
 
 describe('ffmpeg engine', () => {
   it('accepts audio conversions and rejects image conversions', () => {
@@ -30,5 +30,66 @@ describe('ffmpeg engine', () => {
         options: {}
       })
     ).rejects.toEqual(missing.error)
+  })
+
+  it('sets an explicit muxer for a .tmp video output path', () => {
+    const args = buildFfmpegArgs(
+      {
+        jobId: 'job',
+        inputPath: '/tmp/flyingpigs.MOV',
+        outputPath: '/tmp/flyingpigs.mp4',
+        from: 'mov',
+        to: 'mp4',
+        options: {}
+      },
+      '/tmp/.flyingpigs.mp4.tmp'
+    )
+
+    expect(args).toEqual([
+      '-y',
+      '-i',
+      '/tmp/flyingpigs.MOV',
+      '-map_metadata',
+      '-1',
+      '-f',
+      'mp4',
+      '-progress',
+      'pipe:2',
+      '/tmp/.flyingpigs.mp4.tmp'
+    ])
+  })
+
+  it('uses the AAC ADTS muxer and drops video for audio sources', () => {
+    const args = buildFfmpegArgs(
+      {
+        jobId: 'job',
+        inputPath: '/tmp/song.m4a',
+        outputPath: '/tmp/song.aac',
+        from: 'mp4',
+        to: 'aac',
+        options: { keepMetadata: true }
+      },
+      '/tmp/.song.aac.tmp'
+    )
+
+    expect(args).toContain('-vn')
+    expect(args).toContain('adts')
+    expect(args).not.toContain('-map_metadata')
+  })
+
+  it('rejects targets without a configured muxer', () => {
+    expect(() =>
+      buildFfmpegArgs(
+        {
+          jobId: 'job',
+          inputPath: '/tmp/image.png',
+          outputPath: '/tmp/image.jpg',
+          from: 'png',
+          to: 'jpg',
+          options: {}
+        },
+        '/tmp/.image.jpg.tmp'
+      )
+    ).toThrow('No FFmpeg muxer configured for jpg.')
   })
 })
