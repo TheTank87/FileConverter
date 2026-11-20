@@ -18,6 +18,20 @@ jobs:
         with:
           node-version: 24
           cache: npm
+      - name: Validate macOS signing secrets
+        env:
+          CERTIFICATE: ${{ secrets.MAC_CERTIFICATE_BASE64 }}
+          API_KEY: ${{ secrets.APPLE_API_KEY_BASE64 }}
+          IDENTITY: ${{ secrets.MAC_SIGNING_IDENTITY }}
+        run: |
+          for name in CERTIFICATE API_KEY IDENTITY; do
+            if [ -z "${!name}" ]; then
+              echo "::error::Secret for $name is empty"
+              exit 1
+            fi
+          done
+          printf '%s' "$CERTIFICATE" | base64 -D -o /dev/null
+          printf '%s' "$API_KEY" | base64 -D -o /dev/null
       - name: Import Developer ID certificate
         env:
           SIGNING_CERTIFICATE: ${{ secrets.MAC_CERTIFICATE_BASE64 }}
@@ -51,7 +65,7 @@ jobs:
         env:
           CSC_NAME: ${{ secrets.MAC_SIGNING_IDENTITY }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-        run: npm run build:mac
+        run: npm run build && npx electron-builder --mac --arm64 --publish never
       - name: Verify macOS signature and notarization
         env:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
@@ -71,11 +85,18 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
+      - name: Validate Windows signing secret
+        env:
+          CERTIFICATE: ${{ secrets.WIN_CSC_LINK }}
+        shell: pwsh
+        run: |
+          if ([string]::IsNullOrWhiteSpace($env:CERTIFICATE)) { throw "WIN_CSC_LINK is empty" }
+          [Convert]::FromBase64String($env:CERTIFICATE) | Out-Null
       - name: Build signed Windows installers
         env:
           WIN_CSC_LINK: ${{ secrets.WIN_CSC_LINK }}
           WIN_CSC_KEY_PASSWORD: ${{ secrets.WIN_CSC_KEY_PASSWORD }}
-        run: npm run build:win
+        run: npm run build && npx electron-builder --win --publish never
       - name: Verify Windows signatures
         run: npm run verify:signing:win
       - uses: actions/upload-artifact@v4
